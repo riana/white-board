@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-styles/paper-styles.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animations.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation-runner-behavior.html">
+
+<link rel="import" href="./board-storage.html">
+
+<dom-module id="whiteboard-app">
+
+   <template>
+      <style is="custom-style">
+         :host {
+            display: block;
+            /*background: var(--paper-grey-50);*/
+         }
+
+         #appContainer {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+         }
+
+         #board {
+            background: var(--paper-grey-50);
+            /*width: 1920px;
+            height: 1080px;*/
+            margin: 0;
+            padding: 0;
+            position: relative;
+            transform-origin: 0 0;
+            overflow: hidden;
+         }
+
+         #boardContainer {}
+
+         #boardScroll {
+            overflow: auto;
+         }
+
+         .stick {
+            position: absolute;
+            padding: 10px;
+            cursor: pointer;
+            font-family: "Roboto";
+            background: var(--paper-yellow-500);
+         }
+
+         .stick-detail {
+            font-weight: lighter;
+            font-size: 12px;
+         }
+
+         .noselect {
+            -webkit-touch-callout: none;
+            /* iOS Safari */
+            -webkit-user-select: none;
+            /* Chrome/Safari/Opera */
+            -khtml-user-select: none;
+            /* Konqueror */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* IE/Edge */
+            user-select: none;
+            /* non-prefixed version, currently
+                                  not supported by any browser */
+         }
+
+         .ignore-events {
+            pointer-events: none;
+         }
+
+         #addMenu {
+            position: absolute;
+            background: var(--paper-grey-800);
+            opacity: 0;
+            pointer-events: none;
+         }
+
+         #addMenu.visible {
+            opacity: 1;
+            pointer-events: all;
+         }
+
+         .add-button {
+            margin: 4px;
+         }
+
+         .zoom-value {
+            width: 38px;
+            font-family: "Roboto";
+            font-size: 14px;
+            text-align: center;
+            margin-right: 10px;
+         }
+
+         #boardToolbar {
+            background: var(--paper-grey-300);
+            color: var(--paper-blue-900);
+         }
+
+         .board-title {
+            font-family: "Roboto";
+            margin: 10px 20px;
+         }
+
+         #trash {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+         }
+
+         #trashIcon {
+            margin: 20px;
+            width: 40px;
+            height: 40px;
+            color: var(--paper-grey-300);
+            transition: all ease-in 0.2s;
+         }
+
+         #trashIcon.active {
+            color: var(--paper-red-400);
+            width: 48px;
+            height: 48px;
+            transition: all ease-in 0.2s;
+         }
+
+         #stickEditor {
+            position: absolute;
+            visibility: hidden;
+         }
+
+         #stickEditor.visible {
+            visibility: visible;
+         }
+
+         .editor-content {
+            margin: 10px;
+         }
+
+         .stick-text {
+            white-space: pre-wrap;
+         }
+      </style>
+
+      <board-storage id="storage" on-loaded="_loaded"></board-storage>
+
+      <div id="appContainer" class="layout vertical">
+         <div id="boardToolbar" class="layout horizontal center">
+            <div class="board-title">{{title}}</div>
+            <paper-icon-button icon="save" on-tap="_save"></paper-icon-button>
+            <div class="flex"></div>
+            <iron-icon icon="zoom-in"></iron-icon>
+            <paper-slider min="50" max="100" value="{{zoomFactorInput}}" immediate-value="{{zoomFactorInput}}"></paper-slider>
+            <div class="zoom-value">{{zoomFactor}}x</div>
+         </div>
+
+         <div class="flex relative">
+            <div id="boardScroll" class="fit relative">
+               <div id="board" on-down="_trigger" on-up="_checkTrigger" on-tap="_tapOnBoard">
+                  <template is="dom-repeat" items=[[sticks]] as="stick">
+                     <paper-material class="stick noselect" hidden$="{{stick.isEditing}}" style$="top:{{stick.location.y}}px; left:{{stick.location.x}}px; {{_stickStyle(stick)}}" on-track="_track" on-tap="_toTop" on-down="_consume">
+                        <div class="ignore-events">
+                           <div class="stick-text">[[stick.text]]</div>
+                        </div>
+                     </paper-material>
+                  </template>
+               </div>
+            </div>
+            <div id="trash">
+               <iron-icon id="trashIcon" icon="delete"></iron-icon>
+            </div>
+         </div>
+
+
+         <paper-material id="addMenu" class="layout horizontal">
+            <template is="dom-repeat" items=[[colors]] as="color">
+               <paper-icon-button icon="add" class="add-button" style$="{{_addStickStyle(color)}}" on-tap="addItem"></paper-icon-button>
+            </template>
+         </paper-material>
+
+         <paper-material id="stickEditor" style$="{{_stickStyle(selectedStick)}}">
+            <div class="editor-content">
+               <paper-textarea id="stickTextEditor" label="Text textarea" value="{{selectedStick.text}}" no-label-float></paper-textarea>
+            </div>
+         </paper-material>
+      </div>
+   </template>
+
+   <script>
+      "use strict";
+      Polymer({
+         is: "whiteboard-app",
+         behaviors: [
+            Polymer.NeonAnimationRunnerBehavior
+         ],
+         properties: {
+            animationConfig: {
+               value: function() {
+                  return {
+                     'deleteCard': {
+                        // provided by neon-animation/animations/scale-up-animation.html
+                        name: 'scale-down-animation',
+                        node: this,
+                        timing: {
+                           duration: 300
+                        }
+                     }
+                  }
+               }
+            },
+            colors: {
+               type: Array,
+               value: [{
+                  name: "white",
+                  color: "#000000",
+                  background: "#FFFFFF"
+               }, {
+                  name: "yellow",
+                  color: "#000000",
+                  background: "#FFEB3B"
+               }, {
+                  name: "blue",
+                  color: "#FFFFFF",
+                  background: "#039BE5"
+               }, {
+                  name: "green",
+                  color: "#FFFFFF",
+                  background: "#689F38"
+               }, {
+                  name: "purple",
+                  color: "#FFFFFF",
+                  background: "#7E57C2"
+               }, {
+                  name: "red",
+                  color: "#FFFFFF",
+                  background: "#F44336"
+               }, {
+                  name: "orange",
+                  color: "#FFFFFF",
+                  background: "#EF6C00"
+               }]
+            },
+            zoomFactorInput: {
+               type: Number,
+               value: 75,
+               observer: "_updateZoomFromInput"
+            },
+            zoomFactor: {
+               type: Number,
+               value: 0.75,
+               observer: "_updateZoom"
+            },
+            title: {
+               type: String,
+               value: "My Personal Kanban Board"
+            },
+            board: {
+               type: Object,
+               value: {
+                  // width: 3840,
+                  // height: 2160
+                  width: 1920,
+                  height: 1080
+               },
+               observer: '_updateBoardSize'
+            },
+            selectedStick: {
+               type: Object,
+               value: {}
+            },
+            sticks: {
+               type: Array,
+               value: []
+            },
+            boardId: {
+               type: String,
+               value: "default-board"
+            }
+         },
+         longPressDelay: 1000,
+         attached() {
+            this._load();
+         },
+         _loaded(e) {
+            let data = e.detail;
+            if (data.sticks) {
+               this.sticks = data.sticks;
+            }
+         },
+         _load() {
+            this.$.storage.load(this.boardId);
+         },
+         _save() {
+            let data = {
+               sticks: []
+            };
+
+            this.sticks.forEach((stick) => {
+               var storedStick = JSON.parse(JSON.stringify(stick));
+               delete storedStick.isEditing;
+               data.sticks.push(storedStick);
+            });
+
+            this.$.storage.save(this.boardId, data);
+         },
+         _updateBoardSize() {
+            this.$.board.style.width = "" + this.board.width + "px";
+            this.$.board.style.height = "" + this.board.height + "px";
+         },
+         _addStickStyle(stickStyle) {
+            return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
+         },
+         _stickStyle(stick) {
+            if (stick.style) {
+               return `background: ${stick.style.background}; color: ${stick.style.color};`;
+            } else {
+               return '';
+            }
+         },
+         _updateZoomFromInput() {
+            this.zoomFactor = this.zoomFactorInput / 100;
+         },
+         _updateZoom() {
+            this.$.board.style.transform = "scale(" + this.zoomFactor + ")";
+         },
+         _track(e) {
+            let stick = e.model.stick;
+            let state = e.detail.state;
+            if (state === "start") {
+               this._hideAddMenu();
+               this._hideEditor();
+               this.offsetX = e.target.offsetLeft * this.zoomFactor - e.detail.x;
+               this.offsetY = e.target.offsetTop * this.zoomFactor - e.detail.y;
+            }
+            if (state === "track") {
+               let newX = this.offsetX + e.detail.x;
+               let nextRight = newX + e.target.clientWidth;
+               if (nextRight < this.$.board.clientWidth && newX > 0) {
+                  stick.location.x = newX / this.zoomFactor;
+                  this.notifyPath("sticks." + e.model.index + ".location.x", stick.location.x);
+               }
+
+               let newY = this.offsetY + e.detail.y;
+               let nextY = newY + e.target.clientHeight;
+               if (nextY < this.$.board.clientHeight && newY > 0) {
+                  stick.location.y = newY / this.zoomFactor;
+                  this.notifyPath("sticks." + e.model.index + ".location.y", stick.location.y);
+               }
+
+               if (this.overTrash(e.detail)) {
+                  this.$.trashIcon.classList.add("active");
+               } else {
+                  this.$.trashIcon.classList.remove("active");
+               }
+            }
+            if (state === "end") {
+               if (this.overTrash(e.detail)) {
+                  let stick = e.model.stick;
+                  let index = this.sticks.indexOf(stick);
+                  this.animationConfig.deleteCard.node = e.target;
+                  this.playAnimation("deleteCard");
+                  this.debounce("delete", () => {
+                     this.splice("sticks", index, 1);
+                     this.$.trashIcon.classList.remove("active");
+                  }, 200);
+               }
+            }
+         },
+
+         _checkStatusUpdate() {
+            let zoneWidth = this.$.board.clientWidth / 3;
+            let newStatus = stick.status;
+            if (newX < zoneWidth) {
+               newStatus = "ready";
+            } else if (newX > zoneWidth && newX < zoneWidth * 2) {
+               newStatus = "in progress";
+            } else if (newX > zoneWidth * 2) {
+               newStatus = "done";
+            }
+
+            if (newStatus !== stick.status) {
+               stick.status = newStatus;
+               this.notifyPath("sticks." + e.model.index + ".status", stick.status);
+               // console.log("newStatus : ", newStatus);
+            }
+         },
+
+         overTrash(pos) {
+            let bounds = this.$.trash.getBoundingClientRect();
+            let overTrash = true;
+            overTrash = overTrash && (pos.x > bounds.left && pos.x < (bounds.left + bounds.width));
+            overTrash = overTrash && (pos.y > bounds.top && pos.x < (bounds.top + bounds.height));
+            return overTrash;
+         },
+         _consume(e) {
+            e.stopPropagation();
+         },
+         _toTop(e) {
+            e.stopPropagation();
+
+            let index = this.sticks.indexOf(this.selectedStick);
+            this.notifyPath("sticks." + index + ".isEditing", false);
+
+            this._hideAddMenu();
+
+            let stick = e.model.stick;
+            this.selectedStick = stick;
+            // let x = e.detail.x;
+            // let y = e.detail.y;
+            let bounds = e.target.getBoundingClientRect();
+            let x = bounds.left;
+            let y = bounds.top;
+            this.animationConfig['editCard'] = {
+               name: 'scale-up-animation',
+               node: this.$.stickEditor,
+               transformOrigin: '0 0',
+               timing: {
+                  duration: 300
+               }
+            };
+            this.selectedStick.isEditing = true;
+            index = this.sticks.indexOf(this.selectedStick);
+            this.notifyPath("sticks." + index + ".isEditing", true);
+
+            let inputText = this.$.stickTextEditor.getElementsByTagName("textarea")[0];
+            inputText.style.color = this.selectedStick.style.color;
+            let unfocusedLine = this.$.stickTextEditor.getElementsByClassName("unfocused-line")[0];
+            unfocusedLine.style.background = this.selectedStick.style.background;
+            let focusedLine = this.$.stickTextEditor.getElementsByClassName("focused-line")[0];
+            focusedLine.style.background = this.selectedStick.style.color;
+
+            this.$.stickEditor.classList.add("visible");
+            this.$.stickEditor.style.top = '' + y + 'px';
+            this.$.stickEditor.style.left = '' + x + 'px';
+
+            this.playAnimation('editCard');
+            this.splice("sticks", index, 1);
+            this.push("sticks", stick);
+         },
+         _hideEditor() {
+            if (this.$.stickEditor.classList.contains("visible")) {
+               this.selectedStick.isEditing = false;
+               let index = this.sticks.indexOf(this.selectedStick);
+               this.notifyPath("sticks." + index + ".isEditing", false);
+
+               this.animationConfig['stopEditCard'] = {
+                  name: 'scale-down-animation',
+                  node: this.$.stickEditor,
+                  transformOrigin: '0 0',
+                  timing: {
+                     duration: 300
+                  }
+               };
+               this.playAnimation('stopEditCard');
+               this.debounce("stop", () => {
+                  this.$.stickEditor.classList.remove("visible");
+               }, 200);
+
+               this.notifyPath("sticks." + index + ".text", this.selectedStick.text);
+            }
+
+         },
+         _trigger(e) {
+            this.triggerStart = (new Date()).getTime();
+            this.triggerTimeout = setTimeout(() => {
+               let currentTime = (new Date()).getTime();
+               let dt = currentTime - this.triggerStart;
+               this._onLongPress(e);
+               clearTimeout(this.triggerTimeout);
+            }, this.longPressDelay);
+         },
+         _checkTrigger(e) {
+            clearTimeout(this.triggerTimeout);
+         },
+         _onLongPress(e) {
+            console.log(e);
+         },
+         _tapOnBoard(e) {
+            if (this.$.stickEditor.classList.contains("visible")) {
+               this._hideEditor();
+            } else {
+               this._toggleAddMenu(e);
+            }
+         },
+         _hideAddMenu() {
+            if (this.$.addMenu.classList.contains("visible")) {
+               this.$.addMenu.classList.remove("visible");
+            }
+         },
+         _toggleAddMenu(e) {
+            if (this.$.addMenu.classList.contains("visible")) {
+               this._hideAddMenu();
+            } else {
+               this.$.addMenu.style.top = "" + e.detail.y + "px";
+               this.$.addMenu.style.left = "" + e.detail.x + "px";
+               this.$.addMenu.classList.add("visible");
+
+               this.insertPosition = {
+                  x: e.detail.x / this.zoomFactor,
+                  y: e.detail.y / this.zoomFactor
+               }
+            }
+         },
+         addItem(e) {
+            e.stopPropagation();
+            this.$.addMenu.classList.remove("visible");
+            this.push("sticks", {
+               text: "Enter text here",
+               location: {
+                  x: this.insertPosition.x,
+                  y: this.insertPosition.y - this.$.addMenu.clientHeight / 2
+               },
+               style: e.model.color
+            });
+         }
+      });
+   </script>
+
+</dom-module>
