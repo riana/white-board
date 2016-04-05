@@ -1,3 +1,11 @@
+A simple white board app built with Polymer and packaged with electron :
+- create virtual post-its
+- store the board locally
+- Drag and drop interactions
++ create multiple boards
++ link post-its to each others in a mindmap fashion
++ export to csv
+
 API
 
 http://localhost:32101/api/load?id=simple-board
