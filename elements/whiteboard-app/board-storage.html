@@ -27,7 +27,17 @@
             }
          },
          _loaded(e) {
-            this.fire("loaded", this.loadedData);
+            if (this.loadedData.error) {
+               let newBoard = {
+                  title: "Empty board",
+                  sticks: []
+               };
+               this.fire("loaded", newBoard);
+               this.save(".default", newBoard);
+            } else {
+               this.fire("loaded", this.loadedData);
+            }
+
          },
          load(path) {
             this.$.loadAjax.params = {
@@ -35,7 +45,7 @@
             };
             this.$.loadAjax.generateRequest();
          },
-         _saved(e){
+         _saved(e) {
             console.log(e);
          },
          save(path, data) {

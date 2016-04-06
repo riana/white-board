@@ -286,7 +286,7 @@
             },
             boardId: {
                type: String,
-               value: "default-board"
+               value: ".default"
             }
          },
          longPressDelay: 1000,
@@ -294,8 +294,10 @@
             this._load();
          },
          _loaded(e) {
+
             let data = e.detail;
             if (data.sticks) {
+               this.title = data.title;
                this.sticks = data.sticks;
             }
          },
@@ -304,6 +306,7 @@
          },
          _save() {
             let data = {
+               title: this.title,
                sticks: []
             };
 
