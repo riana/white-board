@@ -1,0 +1,16 @@
+{
+	"nodes": [{
+		"id" : "0",
+		"text": "Enter text here\ndsqdsq\ndjljlooi \n tuioooofpp",
+		"x": 200,
+		"y": 200
+	}, {
+		"id" : "1",
+		"text": "node 2",
+		"x": 300,
+		"y": 300
+	}],
+	"links" : [
+		{"source":  "0", "target":  "1"}
+	]
+}
