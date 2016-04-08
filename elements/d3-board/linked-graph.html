@@ -1,0 +1,175 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<script type="text/javascript" src="../../bower_components/d3/d3.js"></script>
+
+<style>
+   .node-html {
+      font-size: 12px;
+      padding: 10px;
+      cursor: pointer;
+   }
+</style>
+
+<script>
+   class LinkedGraph {
+
+      constructor(elSelector) {
+         let width = 800;
+         let height = 600;
+         this.pencilFilter = false;
+         this.svg = d3.select(elSelector).append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+         var filter = this.svg.append("filter")
+            .attr("id", "filter")
+            // .attr("filterUnits", "userSpaceOnUse")
+            // .attr("x", -5)
+            // .attr("y", -5)
+            .attr("height", 2000)
+            .attr("width", 2000);
+
+         filter.append("feTurbulence")
+            .attr("baseFrequency", "0.2")
+            .attr("numOctaves", "5")
+            .attr("type", "fractalNoise");
+
+         filter.append("feDisplacementMap")
+            .attr("scale", "3")
+            .attr("xChannelSelector", "R")
+            .attr("in", "SourceGraphic");
+
+
+         var self = this;
+         this.drag = d3.behavior.drag()
+            .on("drag", function(d, i) {
+               d.x += d3.event.dx;
+               d.y += d3.event.dy;
+               // setTimeout(()=> {
+               self.updateGraph(self.data);
+               // }, 50);
+
+            });
+         this.data = {}
+      }
+
+      updateCircle(){
+         nodeGroup.append("circle").attr("r", 12);
+         var textNode = nodeGroup.append("text")
+            .attr("class", "node-text")
+            .attr("fill", "#0000FF")
+            .attr("font-size", "14").attr("font-weight", "bold");
+
+
+
+         node.select(".node-text").text(function(d) {
+            // console.log("updating text : ", d);
+            return d.text;
+         }).each(insertLinebreaks);
+
+      }
+
+      updateGraph(data) {
+         this.data = data;
+         // console.log("updating :", data.nodes);
+
+         function insertLinebreaks(d) {
+            var el = d3.select(this);
+            var lineHeight = el[0][0].clientHeight;
+            var words = d.text.split('\n');
+
+            el.text('');
+
+            for (var i = 0; i < words.length; i++) {
+               var tspan = el.append('tspan').text(words[i]);
+               if (i > 0)
+                  tspan.attr('x', 0).attr('dy', lineHeight);
+            }
+         };
+
+         var link = this.svg.selectAll("path")
+            .data(data.links);
+         link
+            .enter().append("path")
+            .attr("class", "link")
+            .attr("stroke", "#000000")
+            .attr("stroke-width", 2)
+            .attr("fill", "none")
+            .attr("style", () => {
+               return this.pencilFilter ? "filter:url(#filter)" : "";
+            });
+
+
+         link.attr("d", function(d) {
+            var target = data.nodes.filter((n) => {
+               return n.id === d.target;
+            })[0];
+            var source = data.nodes.filter((n) => {
+               return n.id === d.source;
+            })[0];
+            var dx = target.x - source.x,
+               dy = target.y - source.y,
+               dr = Math.sqrt(dx * dx + dy * dy);
+            return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
+         });
+
+         link.exit().remove();
+
+         var node = this.svg.selectAll(".node")
+            .data(data.nodes);
+
+
+         var nodeGroup = node.enter().append("g")
+         .call(this.drag)
+            .attr("class", "node").attr("style", () => {
+               return this.pencilFilter ? "filter:url(#filter)" : "";
+            });
+
+
+
+         node.attr("transform", function(d) {
+            return 'translate(' + [d.x, d.y] + ')';
+         });
+
+         node.exit().remove();
+
+         // Alternative : HTML text
+         nodeGroup.append("foreignObject")
+
+         .attr("class", "node-fo")
+            .attr("width", 100)
+            .attr("height", 30)
+            .append("xhtml:body")
+
+            .append("div")
+            .attr("draggable", true)
+            .attr("width", 100)
+            .attr("height", 30)
+            .on('click', function(d) {
+               console.log('clicked on : ', d, this);
+            })
+            .attr("class", "node-html")
+            .append("span")
+            .html(function(d) {
+               return d.text;
+            });
+
+         node.select(".node-fo").attr("transform", function(d) {
+            let bbox = this.getBBox()
+            return "translate(" + [-bbox.width / 2, -bbox.height / 2] + ")"
+         });
+
+         node.select(".node-html").text(function(d) {
+            // console.log("updating text : ", d);
+            return d.text;
+         }).attr("updateStyle", function(d){
+            // this.classList.add("green-card");
+            this.style.color = "#FFFFFF";
+            this.style.background = "#0000FF";
+            // this.style.width = '300px';
+            // this.style.height = '70px';
+         });
+      }
+
+   }
+</script>

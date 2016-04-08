@@ -2,7 +2,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 
-<script type="text/javascript" src="../../bower_components/d3/d3.js"></script>
+<link rel="import" href="./linked-graph.html">
 
 <dom-module id="d3-board">
 
@@ -10,12 +10,9 @@
       <style is="custom-style">
          :host {
             display: block;
-            /*position: relative;*/
          }
 
          #d3Board {
-            background: red;
-            /*position: absolute;*/
             width: 100%;
             height: 100%;
             top: 0;
@@ -26,122 +23,20 @@
       <iron-ajax auto url="/elements/d3-board/test.json" handle-as="json" on-response="handleResponse" debounce-duration="300"></iron-ajax>
 
       <div id="d3Board">
-         <div>
+      </div>
    </template>
 
    <script>
       "use strict";
       Polymer({
          is: "d3-board",
+         ready() {
+            this.linkedGraph = new LinkedGraph("#d3Board");
+            this.linkedGraph.pencilFilter = false;
+         },
          handleResponse(e) {
             let data = e.detail.response;
-
-            let width = 800;
-            let height = 600;
-
-            var svg = d3.select("#d3Board").append("svg")
-               .attr("width", width)
-               .attr("height", height);
-
-            var filter = svg.append("filter")
-               .attr("id", "filter")
-               // .attr("filterUnits", "userSpaceOnUse")
-               // .attr("x", -5)
-               // .attr("y", -5)
-               .attr("height", 2000)
-               .attr("width", 2000);
-
-            filter.append("feTurbulence")
-               .attr("baseFrequency", "0.2")
-               .attr("numOctaves", "5")
-               .attr("type", "fractalNoise");
-
-            filter.append("feDisplacementMap")
-               .attr("scale", "3")
-               .attr("xChannelSelector", "R")
-               .attr("in", "SourceGraphic");
-
-            var node = svg.selectAll(".node");
-            var link = svg.selectAll(".link");
-
-
-            function updateGraph() {
-               console.log("updating :", data.nodes);
-
-               var link = svg.selectAll("path")
-                  .data(data.links);
-               link
-                  .enter().append("path")
-                  .attr("class", "link")
-                  .attr("stroke", "#000000")
-                  .attr("stroke-width", 5)
-                  .attr("fill", "none")
-                  .attr("style", "filter:url(#filter)");
-
-               link.attr("d", function(d) {
-                  var target = data.nodes.filter((n) => {
-                     return n.id === d.target;
-                  })[0];
-                  var source = data.nodes.filter((n) => {
-                     return n.id === d.source;
-                  })[0];
-                  var dx = target.x - source.x,
-                     dy = target.y - source.y,
-                     dr = Math.sqrt(dx * dx + dy * dy);
-                  return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
-               });
-
-               link.exit().remove();
-
-               var node = svg.selectAll(".node")
-                  .data(data.nodes);
-
-
-               var nodeGroup = node.enter().append("g")
-                  .attr("class", "node")
-                  .attr("style", "filter:url(#filter)");
-
-
-               nodeGroup.append("circle").attr("r", 12);
-               var textNode = nodeGroup.append("text")
-                  .attr("class", "node-text")
-                  .attr("fill", "#ffffff")
-                  .attr("font-size", "12");
-
-
-               node.select(".node-text").text(function(d) {
-                  // console.log("updating text : ", d);
-                  return d.text;
-               }).each(insertLinebreaks);
-
-               node.attr("transform", function(d) {
-                  return 'translate(' + [d.x, d.y] + ')';
-               });
-
-               node.exit().remove();
-
-
-
-
-               // Alternative : HTML text
-               // node.append("foreignObject") // .attr("width", 100) // .attr("height", 100) // .append("xhtml:body") // .append("span") // .attr("fill", "#ffffff") // .attr("font-size", "123") // .html(function(d) { // return d.text; // });
-            };
-
-
-            function insertLinebreaks(d) {
-               var el = d3.select(this);
-               var lineHeight = el[0][0].clientHeight;
-               var words = d.text.split('\n');
-
-               el.text('');
-
-               for (var i = 0; i < words.length; i++) {
-                  var tspan = el.append('tspan').text(words[i]);
-                  if (i > 0)
-                     tspan.attr('x', 0).attr('dy', lineHeight);
-               }
-            };
-
+            this.linkedGraph.updateGraph(data);
             let updateCounter = 0;
             let updateTask = setInterval(() => {
                data.nodes[0].x = data.nodes[0].x + 40;
@@ -162,14 +57,15 @@
                }
 
                if (updateCounter >= 10) {
-                  clearInterval(updateTask);
+
                   data.nodes.splice(0, 1);
                   data.links.splice(0, 1);
                }
-               updateGraph();
-            }, 500);
-
-            updateGraph();
+               if (updateCounter >= 10) {
+                  clearInterval(updateTask);
+               }
+               this.linkedGraph.updateGraph(data);
+            }, 100);
          }
 
       });
