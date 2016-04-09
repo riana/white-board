@@ -50,7 +50,7 @@
 
       <iron-ajax auto url="/elements/d3-board/test.json" handle-as="json" on-response="handleResponse" debounce-duration="300"></iron-ajax>
 
-      <div id="d3Board" on-tap="_addNode" on-track="_track">
+      <div id="d3Board" on-tap="_addNode">
          <div id="trash">
             <iron-icon id="trashIcon" icon="delete"></iron-icon>
          </div>
@@ -64,9 +64,9 @@
          ready() {
             this.linkedGraph = new LinkedGraph("#d3Board");
             this.linkedGraph.pencilFilter = false;
+
             this.linkedGraph.onDragItem = (pos, item) => {
-               console.log("onDragItem");
-               if (this.overTrash(pos)) {
+               if (this.isOverTrash(pos)) {
                   this.$.trashIcon.classList.add("active");
                } else {
                   this.$.trashIcon.classList.remove("active");
@@ -74,8 +74,7 @@
             };
 
             this.linkedGraph.onDragItemEnd = (pos, item) => {
-               console.log("onDragItemEnd : ", pos, this.data);
-               if (this.overTrash(pos)) {
+               if (this.isOverTrash(pos)) {
                   let index = this.data.nodes.indexOf(item);
                   this.data.nodes.splice(index, 1);
 
@@ -149,10 +148,7 @@
 
             this.linkedGraph.updateGraph(this.data);
          },
-         _track(e) {
-            console.log(e);
-         },
-         overTrash(pos) {
+         isOverTrash(pos) {
             let bounds = this.$.trash.getBoundingClientRect();
             let overTrash = true;
             overTrash = overTrash && (pos.x > bounds.left && pos.x < (bounds.left + bounds.width));
