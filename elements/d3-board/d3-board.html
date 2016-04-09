@@ -17,12 +17,13 @@
             height: 100%;
             top: 0;
             left: 0;
+            overflow: hidden;
          }
       </style>
 
       <iron-ajax auto url="/elements/d3-board/test.json" handle-as="json" on-response="handleResponse" debounce-duration="300"></iron-ajax>
 
-      <div id="d3Board">
+      <div id="d3Board" on-tap="_addNode" on-track="_track">
       </div>
    </template>
 
@@ -38,6 +39,7 @@
             let data = e.detail.response;
             this.linkedGraph.updateGraph(data);
             let updateCounter = 0;
+            this.data = data;
             let updateTask = setInterval(() => {
                data.nodes[0].x = data.nodes[0].x + 40;
                updateCounter++;
@@ -66,7 +68,33 @@
                }
                this.linkedGraph.updateGraph(data);
             }, 100);
+         },
+         _addNode(e) {
+            if(!this.id){
+               this.id = 2;
+            }
+            this.id++;
+            let newId = this.id;
+            let newNode = {
+               id: "" + newId,
+               text: "new Node",
+               x: e.detail.x,
+               y: e.detail.y
+            };
+            this.data.nodes.push(newNode);
+
+            let link = {
+               source: newId,
+               target: "1"
+            };
+            this.data.links.push(link);
+
+            this.linkedGraph.updateGraph(this.data);
+         },
+         _track(e) {
+            console.log(e);
          }
+
 
       });
    </script>

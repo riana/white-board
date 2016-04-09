@@ -40,20 +40,21 @@
             .attr("in", "SourceGraphic");
 
 
+         this.linksLayer = this.svg.append("g");
+         this.nodesLayer = this.svg.append("g");
+
          var self = this;
          this.drag = d3.behavior.drag()
             .on("drag", function(d, i) {
                d.x += d3.event.dx;
                d.y += d3.event.dy;
-               // setTimeout(()=> {
                self.updateGraph(self.data);
-               // }, 50);
-
+               console.log(d3.event);
             });
          this.data = {}
       }
 
-      updateCircle(){
+      updateCircle() {
          nodeGroup.append("circle").attr("r", 12);
          var textNode = nodeGroup.append("text")
             .attr("class", "node-text")
@@ -87,7 +88,7 @@
             }
          };
 
-         var link = this.svg.selectAll("path")
+         var link = this.linksLayer.selectAll("path")
             .data(data.links);
          link
             .enter().append("path")
@@ -110,17 +111,33 @@
             var dx = target.x - source.x,
                dy = target.y - source.y,
                dr = Math.sqrt(dx * dx + dy * dy);
-            return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
+            // Curved line
+            // return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
+            function rotate(cx, cy, x, y, angle) {
+               var radians = (Math.PI / 180) * angle,
+                  cos = Math.cos(radians),
+                  sin = Math.sin(radians),
+                  nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+                  ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+               return [nx, ny];
+            }
+            var p2 = rotate(0, 0, dx, dy, 90);
+            var scale = dr / 4;
+            scale = scale * Math.sign(dy) * Math.sign(dx) / dr;
+            return "M" + source.x + ',' + source.y + 'S' + (source.x + dx / 2 + p2[0] * scale) + "," + (source.y + dy / 2 + p2[1] * scale) + ',' + target.x + "," + target.y;
+
+            // Straigth line
+            // return "M" + source.x + ',' + source.y + 'L' + target.x + "," + target.y;
          });
 
          link.exit().remove();
 
-         var node = this.svg.selectAll(".node")
+         var node = this.nodesLayer.selectAll(".node")
             .data(data.nodes);
 
 
          var nodeGroup = node.enter().append("g")
-         .call(this.drag)
+            .call(this.drag)
             .attr("class", "node").attr("style", () => {
                return this.pencilFilter ? "filter:url(#filter)" : "";
             });
@@ -133,7 +150,6 @@
 
          node.exit().remove();
 
-         // Alternative : HTML text
          nodeGroup.append("foreignObject")
 
          .attr("class", "node-fo")
@@ -141,7 +157,7 @@
             .attr("height", 30)
             .append("xhtml:body")
 
-            .append("div")
+         .append("div")
             .attr("draggable", true)
             .attr("width", 100)
             .attr("height", 30)
@@ -162,7 +178,7 @@
          node.select(".node-html").text(function(d) {
             // console.log("updating text : ", d);
             return d.text;
-         }).attr("updateStyle", function(d){
+         }).attr("updateStyle", function(d) {
             // this.classList.add("green-card");
             this.style.color = "#FFFFFF";
             this.style.background = "#0000FF";
