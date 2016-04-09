@@ -2,6 +2,10 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+
+<link rel="import" href="../../bower_components/paper-styles/paper-styles.html">
+
 <link rel="import" href="./linked-graph.html">
 
 <dom-module id="d3-board">
@@ -19,11 +23,37 @@
             left: 0;
             overflow: hidden;
          }
+
+         #trash {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+         }
+
+         #trashIcon {
+            margin: 20px;
+            width: 40px;
+            height: 40px;
+            color: var(--paper-grey-300);
+            transition: all ease-in 0.2s;
+         }
+
+         #trashIcon.active {
+            color: var(--paper-red-400);
+            width: 48px;
+            height: 48px;
+            transition: all ease-in 0.2s;
+         }
       </style>
 
       <iron-ajax auto url="/elements/d3-board/test.json" handle-as="json" on-response="handleResponse" debounce-duration="300"></iron-ajax>
 
       <div id="d3Board" on-tap="_addNode" on-track="_track">
+         <div id="trash">
+            <iron-icon id="trashIcon" icon="delete"></iron-icon>
+         </div>
       </div>
    </template>
 
@@ -34,6 +64,34 @@
          ready() {
             this.linkedGraph = new LinkedGraph("#d3Board");
             this.linkedGraph.pencilFilter = false;
+            this.linkedGraph.onDragItem = (pos, item) => {
+               console.log("onDragItem");
+               if (this.overTrash(pos)) {
+                  this.$.trashIcon.classList.add("active");
+               } else {
+                  this.$.trashIcon.classList.remove("active");
+               }
+            };
+
+            this.linkedGraph.onDragItemEnd = (pos, item) => {
+               console.log("onDragItemEnd : ", pos, this.data);
+               if (this.overTrash(pos)) {
+                  let index = this.data.nodes.indexOf(item);
+                  this.data.nodes.splice(index, 1);
+
+                  let links = this.data.links.filter((link) => {
+                     return link.source === item.id || link.target === item.id;
+                  });
+
+                  links.forEach((link) => {
+                     let index = this.data.links.indexOf(link);
+                     this.data.links.splice(index, 1);
+                  });
+
+                  this.linkedGraph.updateGraph(this.data);
+               }
+               this.$.trashIcon.classList.remove("active");
+            };
          },
          handleResponse(e) {
             let data = e.detail.response;
@@ -70,7 +128,7 @@
             }, 100);
          },
          _addNode(e) {
-            if(!this.id){
+            if (!this.id) {
                this.id = 2;
             }
             this.id++;
@@ -93,7 +151,14 @@
          },
          _track(e) {
             console.log(e);
-         }
+         },
+         overTrash(pos) {
+            let bounds = this.$.trash.getBoundingClientRect();
+            let overTrash = true;
+            overTrash = overTrash && (pos.x > bounds.left && pos.x < (bounds.left + bounds.width));
+            overTrash = overTrash && (pos.y > bounds.top && pos.x < (bounds.top + bounds.height));
+            return overTrash;
+         },
 
 
       });

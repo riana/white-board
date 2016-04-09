@@ -48,8 +48,24 @@
             .on("drag", function(d, i) {
                d.x += d3.event.dx;
                d.y += d3.event.dy;
+               self.lastDrag = {
+                  x: d3.event.x,
+                  y: d3.event.y
+               }
                self.updateGraph(self.data);
-               console.log(d3.event);
+               if (self.onDragItem) {
+                  self.onDragItem({
+                        x: d3.event.x,
+                        y: d3.event.y
+                     },
+                     d);
+               }
+            })
+            .on('dragend', function(d, i) {
+               if (self.onDragItemEnd) {
+                  self.onDragItemEnd(self.lastDrag,
+                     d);
+               }
             });
          this.data = {}
       }
