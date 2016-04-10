@@ -65,6 +65,8 @@
                   x: d3.event.x,
                   y: d3.event.y
                }
+
+               self.state = "draggingItem";
                self.updateGraph(self.data);
                if (self.onDragItem) {
                   self.onDragItem({
@@ -79,6 +81,7 @@
                   self.onDragItemEnd(self.lastDrag,
                      d);
                }
+               self.state = "idle";
                // d3.event.stopPropagation();
 
             });
@@ -102,6 +105,7 @@
       }
 
       updateGraph(data) {
+         let self = this;
          this.data = data;
          // console.log("updating :", data.nodes);
 
@@ -193,8 +197,17 @@
             .attr("width", 100)
             .attr("height", 30)
             .on('click', function(d) {
+
                console.log('clicked on : ', d, this, d3.event);
+               d3.event.preventDefault();
                d3.event.stopPropagation();
+            })
+            .on("mouseup", function(d){
+               if(self.state !== "draggingItem"){
+                  d3.event.preventDefault();
+                  d3.event.stopPropagation();
+               }
+
             })
             .attr("class", "node-html")
             .append("span")
