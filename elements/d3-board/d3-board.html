@@ -46,6 +46,20 @@
             height: 48px;
             transition: all ease-in 0.2s;
          }
+
+         #stickEditor {
+            position: absolute;
+            visibility: hidden;
+         }
+
+         #stickEditor.visible {
+            visibility: visible;
+         }
+
+         .editor-content {
+            margin: 10px;
+         }
+
       </style>
 
       <iron-ajax auto url="/elements/d3-board/test.json" handle-as="json" on-response="handleResponse" debounce-duration="300"></iron-ajax>
@@ -54,6 +68,13 @@
          <div id="trash">
             <iron-icon id="trashIcon" icon="delete"></iron-icon>
          </div>
+
+         <paper-material id="stickEditor">
+            <div class="editor-content">
+               <paper-textarea id="stickTextEditor" label="Text textarea" value="{{selectedStick.text}}" no-label-float></paper-textarea>
+            </div>
+         </paper-material>
+
       </div>
    </template>
 
@@ -96,6 +117,18 @@
                }
                this.$.trashIcon.classList.remove("active");
             };
+
+            this.linkedGraph.onNodeClicked = (node) => {
+               this.editNode(node);
+            }
+         },
+
+         editNode(node){
+            console.log("editNode");
+            // this.selectedNode = node;
+            // this.$.stickEditor.classList.add("visible");
+            // this.$.stickEditor.style.top = '' + node.y + 'px';
+            // this.$.stickEditor.style.left = '' + node.x + 'px';
          },
          handleResponse(e) {
             let data = e.detail.response;

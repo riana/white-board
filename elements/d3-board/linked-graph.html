@@ -32,9 +32,25 @@
             })
             .on("mouseup", function(e) {
                let dt = d3.event.timeStamp - this.touchStartDate;
-               if (dt < 50) {
+
+
+               var nodes = self.nodesLayer.selectAll(".node")[0];
+               let pickedNodes = nodes.filter(node => {
+                  let bbox = node.getBoundingClientRect();
+                  let x = d3.event.clientX;
+                  let y = d3.event.clientY;
+
+                  let bbx = bbox.left;
+                  let bby = bbox.top;
+                  let inside = x > bbx && x < (bbx + bbox.width);
+                  inside = inside && y > bby && y < (bby + bbox.height);
+                  return inside;
+               });
+               if (dt < 50 && pickedNodes.length === 0) {
+                  console.log('click on board : ', d3.event, pickedNodes);
                   self.onBoardClicked(d3.event);
                }
+
                // console.log("touch end on board : ", dt);
             });
 
@@ -70,8 +86,6 @@
                   y: d3.event.y
                }
 
-               self.state = LinkedGraphStates.DRAGGING_ITEM;
-
                self.updateGraph(self.data);
                if (self.onDragItem) {
                   self.onDragItem({
@@ -81,6 +95,9 @@
                      d);
                }
             })
+            .on('dragstart', function(d, i) {
+               self.state = LinkedGraphStates.DRAGGING_ITEM;
+            })
             .on('dragend', function(d, i) {
                if (self.onDragItemEnd) {
                   self.onDragItemEnd(self.lastDrag,
@@ -88,6 +105,8 @@
                }
                self.state = LinkedGraphStates.IDLE;
                // d3.event.stopPropagation();
+               // console.log(d3.event);
+               d3.event.sourceEvent.stopPropagation();
 
             });
          this.data = {}
@@ -130,8 +149,8 @@
             var p2 = rotate(0, 0, dx, dy, 90);
             var scale = dr / 4;
             scale = scale * Math.sign(dy) / dr;
-            if(dx < 0){
-               
+            if (dx < 0) {
+
             }
             return "M" + source.x + ',' + source.y + 'S' + (source.x + dx / 2 + p2[0] * scale) + "," + (source.y + dy / 2 + p2[1] * scale) + ',' + target.x + "," + target.y;
 
@@ -171,17 +190,12 @@
             .attr("width", 100)
             .attr("height", 30)
             .on('click', function(d) {
-
-               console.log('clicked on : ', d, this, d3.event);
-               d3.event.preventDefault();
-               d3.event.stopPropagation();
-            })
-            .on("mouseup", function(d) {
-               if (self.state !== LinkedGraphStates.DRAGGING_ITEM) {
-                  d3.event.preventDefault();
-                  d3.event.stopPropagation();
+               if (self.onNodeClicked) {
+                  self.onNodeClicked(d);
                }
 
+               d3.event.preventDefault();
+               d3.event.stopPropagation();
             })
             .attr("class", "node-html")
             .append("span")
