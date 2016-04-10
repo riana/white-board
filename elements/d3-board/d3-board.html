@@ -50,7 +50,7 @@
 
       <iron-ajax auto url="/elements/d3-board/test.json" handle-as="json" on-response="handleResponse" debounce-duration="300"></iron-ajax>
 
-      <div id="d3Board" on-tap="_addNode">
+      <div id="d3Board">
          <div id="trash">
             <iron-icon id="trashIcon" icon="delete"></iron-icon>
          </div>
@@ -64,6 +64,11 @@
          ready() {
             this.linkedGraph = new LinkedGraph("#d3Board");
             this.linkedGraph.pencilFilter = false;
+
+            this.linkedGraph.onBoardClicked = (e) => {
+               console.log("onBoardClicked : ", e);
+               this._addNode(e);
+            };
 
             this.linkedGraph.onDragItem = (pos, item) => {
                if (this.isOverTrash(pos)) {
@@ -135,8 +140,8 @@
             let newNode = {
                id: "" + newId,
                text: "new Node",
-               x: e.detail.x,
-               y: e.detail.y
+               x: e.x,
+               y: e.y
             };
             this.data.nodes.push(newNode);
 
@@ -149,10 +154,14 @@
             this.linkedGraph.updateGraph(this.data);
          },
          isOverTrash(pos) {
-            let bounds = this.$.trash.getBoundingClientRect();
-            let overTrash = true;
-            overTrash = overTrash && (pos.x > bounds.left && pos.x < (bounds.left + bounds.width));
-            overTrash = overTrash && (pos.y > bounds.top && pos.x < (bounds.top + bounds.height));
+            let overTrash = false;
+            if (pos && pos.x && pos.y) {
+               let bounds = this.$.trash.getBoundingClientRect();
+               overTrash = true;
+               overTrash = overTrash && (pos.x > bounds.left && pos.x < (bounds.left + bounds.width));
+               overTrash = overTrash && (pos.y > bounds.top && pos.x < (bounds.top + bounds.height));
+            }
+
             return overTrash;
          },
 
