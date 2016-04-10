@@ -12,8 +12,8 @@
 
 <script>
    const LinkedGraphStates = {
-      IDLE : "IDLE",
-      DRAGGING_ITEM : "DRAGGING_ITEM"
+      IDLE: "IDLE",
+      DRAGGING_ITEM: "DRAGGING_ITEM"
 
    }
    class LinkedGraph {
@@ -27,17 +27,16 @@
          this.svg = d3.select(elSelector).append("svg")
             .attr("width", width)
             .attr("height", height)
-
-         .on("mousedown", function(e) {
-            this.touchStartDate = d3.event.timeStamp;
-         })
-         .on("mouseup", function(e) {
-            let dt = d3.event.timeStamp - this.touchStartDate;
-            if (dt < 50) {
-               self.onBoardClicked(d3.event);
-            }
-            // console.log("touch end on board : ", dt);
-         });
+            .on("mousedown", function(e) {
+               this.touchStartDate = d3.event.timeStamp;
+            })
+            .on("mouseup", function(e) {
+               let dt = d3.event.timeStamp - this.touchStartDate;
+               if (dt < 50) {
+                  self.onBoardClicked(d3.event);
+               }
+               // console.log("touch end on board : ", dt);
+            });
 
          var filter = this.svg.append("filter")
             .attr("id", "filter")
@@ -72,6 +71,7 @@
                }
 
                self.state = LinkedGraphStates.DRAGGING_ITEM;
+
                self.updateGraph(self.data);
                if (self.onDragItem) {
                   self.onDragItem({
@@ -93,41 +93,7 @@
          this.data = {}
       }
 
-      updateCircle() {
-         nodeGroup.append("circle").attr("r", 12);
-         var textNode = nodeGroup.append("text")
-            .attr("class", "node-text")
-            .attr("fill", "#0000FF")
-            .attr("font-size", "14").attr("font-weight", "bold");
-
-
-
-         node.select(".node-text").text(function(d) {
-            // console.log("updating text : ", d);
-            return d.text;
-         }).each(insertLinebreaks);
-
-      }
-
-      updateGraph(data) {
-         let self = this;
-         this.data = data;
-         // console.log("updating :", data.nodes);
-
-         function insertLinebreaks(d) {
-            var el = d3.select(this);
-            var lineHeight = el[0][0].clientHeight;
-            var words = d.text.split('\n');
-
-            el.text('');
-
-            for (var i = 0; i < words.length; i++) {
-               var tspan = el.append('tspan').text(words[i]);
-               if (i > 0)
-                  tspan.attr('x', 0).attr('dy', lineHeight);
-            }
-         };
-
+      updateEdges(data) {
          var link = this.linksLayer.selectAll("path")
             .data(data.links);
          link
@@ -163,7 +129,10 @@
             }
             var p2 = rotate(0, 0, dx, dy, 90);
             var scale = dr / 4;
-            scale = scale * Math.sign(dy) * Math.sign(dx) / dr;
+            scale = scale * Math.sign(dy) / dr;
+            if(dx < 0){
+               
+            }
             return "M" + source.x + ',' + source.y + 'S' + (source.x + dx / 2 + p2[0] * scale) + "," + (source.y + dy / 2 + p2[1] * scale) + ',' + target.x + "," + target.y;
 
             // Straigth line
@@ -171,18 +140,18 @@
          });
 
          link.exit().remove();
+      }
 
+      updateNodes(data) {
+         let self = this;
          var node = this.nodesLayer.selectAll(".node")
             .data(data.nodes);
-
 
          var nodeGroup = node.enter().append("g")
             .call(this.drag)
             .attr("class", "node").attr("style", () => {
                return this.pencilFilter ? "filter:url(#filter)" : "";
             });
-
-
 
          node.attr("transform", function(d) {
             return 'translate(' + [d.x, d.y] + ')';
@@ -207,8 +176,8 @@
                d3.event.preventDefault();
                d3.event.stopPropagation();
             })
-            .on("mouseup", function(d){
-               if(self.state !== LinkedGraphStates.DRAGGING_ITEM){
+            .on("mouseup", function(d) {
+               if (self.state !== LinkedGraphStates.DRAGGING_ITEM) {
                   d3.event.preventDefault();
                   d3.event.stopPropagation();
                }
@@ -235,6 +204,14 @@
             // this.style.width = '300px';
             // this.style.height = '70px';
          });
+      }
+
+      updateGraph(data) {
+         let self = this;
+         this.data = data;
+         // console.log("updating :", data.nodes);
+         this.updateEdges(data);
+         this.updateNodes(data);
       }
 
    }
