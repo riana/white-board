@@ -4,9 +4,17 @@
 
 <style>
    .node-html {
-      font-size: 12px;
+      font-family: "Roboto";
+      font-size: 14px;
       padding: 10px;
+      box-sizing: border-box;
       cursor: pointer;
+      font-weight: lighter;
+   }
+
+   .node-html-content {
+      margin: 10px;
+
    }
 </style>
 
@@ -16,6 +24,27 @@
       DRAGGING_ITEM: "DRAGGING_ITEM"
 
    }
+
+   function getScreenCoords(x, y, translate, scale) {
+      var xn = translate[0] + x * scale;
+      var yn = translate[1] + y * scale;
+      return {
+         x: xn,
+         y: yn
+      };
+   }
+
+   function getDiagramCoords(x, y, translate, scale) {
+      var xn = (x - translate[0]) / scale;
+      var yn = (y - translate[1]) / scale;
+      return {
+         x: xn,
+         y: yn
+      };
+   }
+
+
+
    class LinkedGraph {
 
       constructor(elSelector) {
@@ -33,26 +62,9 @@
             self.translate = d3.event.translate;
          }
 
-         function getScreenCoords(x, y, translate, scale) {
-            var xn = translate[0] + x * scale;
-            var yn = translate[1] + y * scale;
-            return {
-               x: xn,
-               y: yn
-            };
-         }
-
-         function getDiagramCoords(x, y, translate, scale) {
-            var xn =  (x - translate[0])/ scale ;
-            var yn =  (y - translate[1]) / scale ;
-            return {
-               x: xn,
-               y: yn
-            };
-         }
 
          var zoom = d3.behavior.zoom()
-            .scaleExtent([0.1, 1.5])
+            .scaleExtent([0.1, 1])
             .on("zoom", zoomed);
 
          this.svg = d3.select(elSelector).append("svg")
@@ -107,6 +119,7 @@
 
          this.container = this.svg.append("g");
 
+
          this.linksLayer = this.container.append("g");
          this.nodesLayer = this.container.append("g");
 
@@ -134,7 +147,8 @@
             })
             .on('dragend', function(d, i) {
                if (self.onDragItemEnd) {
-                  self.onDragItemEnd(self.lastDrag,
+                  let coords = getScreenCoords(self.lastDrag.x, self.lastDrag.y, self.translate, self.scale);
+                  self.onDragItemEnd(coords,
                      d);
                }
                self.state = LinkedGraphStates.IDLE;
@@ -215,37 +229,70 @@
          nodeGroup.append("foreignObject")
 
          .attr("class", "node-fo")
-            .attr("width", 100)
-            .attr("height", 30)
+            // .attr("width", 100)
+            // .attr("height", 30)
             .append("xhtml:body")
-
-         .append("div")
+            .append("div")
             .attr("draggable", true)
-            .attr("width", 100)
-            .attr("height", 30)
+            // .attr("width", 100)
+            // .attr("height", 30)
             .on('click', function(d) {
                if (self.onNodeClicked) {
-                  self.onNodeClicked(d);
-               }
 
+                  let screenPos = getScreenCoords(d.x, d.y, self.translate, self.scale);
+                  self.onNodeClicked(d, screenPos);
+               }
                d3.event.preventDefault();
                d3.event.stopPropagation();
             })
             .attr("class", "node-html")
-            .append("span")
+            .append("div")
+            .attr("class", "node-html-content")
             .html(function(d) {
                return d.text;
             });
 
-         node.select(".node-fo").attr("transform", function(d) {
-            let bbox = this.getBBox()
-            return "translate(" + [-bbox.width / 2, -bbox.height / 2] + ")"
+         node.select(".node-fo").each(function(d) {
+
+            let container = d3.select(this);
+            let content = d3.select(this).select(".node-html").each(function(d) {
+               let bounds = this.getBoundingClientRect();
+               let width = d.width ? d.width : 100;
+               let height = d.height ? d.height : 100;
+
+               container
+                  .attr("width", width)
+                  .attr("height", height)
+                  .attr("transform", function(d) {
+                     let bbox = this.getBBox()
+                     return "translate(" + [- width / 2, -height / 2] + ")"
+                  });
+
+            });
+
+
          });
 
-         node.select(".node-html").text(function(d) {
-            // console.log("updating text : ", d);
-            return d.text;
-         }).attr("updateStyle", function(d) {
+         function insertLinebreaks(d) {
+            var el = d3.select(this);
+            // var lineHeight = el[0][0].clientHeight;
+            var words = d.text.split('\n');
+
+            el.text('');
+
+            for (var i = 0; i < words.length; i++) {
+               var tspan = el.append('br').text(words[i]);
+               // if (i > 0)
+               //    tspan.attr('x', 0).attr('dy', lineHeight);
+            }
+         };
+
+
+         node.select(".node-html").html(function(d) {
+            var html = d.text.split("\n");
+            return html.join("<br>");
+         }) .attr("updateStyle", function(d) {
+            // insertLinebreaks(d);
             // this.classList.add("green-card");
             this.style.color = "#FFFFFF";
             this.style.background = "#0000FF";

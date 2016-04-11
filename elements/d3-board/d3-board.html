@@ -52,6 +52,10 @@
             position: absolute;
             visibility: hidden;
             background: red;
+            max-width: 250px;
+         }
+
+         #editorContent {
             min-width: 100px;
          }
 
@@ -61,6 +65,12 @@
 
          .editor-content {
             margin: 10px;
+         }
+
+         #stickTextEditor {
+            --paper-input-container-input: {
+               font-size: 14px;
+            }
          }
       </style>
 
@@ -102,7 +112,7 @@
                   this.stopEditNode();
                   this.linkedGraph.updateGraph(this.data);
                } else {
-                  this._addNode(pos);
+                  this._addNode(e, pos);
                }
 
             };
@@ -134,21 +144,23 @@
                this.$.trashIcon.classList.remove("active");
             };
 
-            this.linkedGraph.onNodeClicked = (node) => {
-               this.editNode(node);
+            this.linkedGraph.onNodeClicked = (node, screenPos) => {
+               this.editNode(node, screenPos);
             }
          },
 
-         editNode(node) {
+         editNode(node, screenPos) {
             this.editing = true;
             this.selectedNode = node;
             this.$.stickEditor.classList.add("visible");
-            let x = node.x - this.$.stickEditor.clientWidth / 2;
-            let y = node.y - this.$.stickEditor.clientHeight / 2;
+            let x = screenPos.x - this.$.stickEditor.clientWidth / 2;
+            let y = screenPos.y - this.$.stickEditor.clientHeight / 2;
             this.$.stickEditor.style.top = '' + y + 'px';
             this.$.stickEditor.style.left = '' + x + 'px';
          },
          stopEditNode() {
+            this.selectedNode.width = this.$.editorContent.clientWidth + 10;
+            this.selectedNode.height = this.$.editorContent.clientHeight + 10;
             this.editing = false;
             this.$.stickEditor.classList.remove("visible");
          },
@@ -158,27 +170,31 @@
             let updateCounter = 0;
             this.data = data;
          },
-         _addNode(e) {
+         _addNode(e, pos) {
             if (!this.id) {
-               this.id = 2;
+               this.id = 0;
             }
             this.id++;
             let newId = this.id;
             let newNode = {
                id: "" + newId,
                text: "new Node",
-               x: e.x,
-               y: e.y
+               x: pos.x,
+               y: pos.y
             };
             this.data.nodes.push(newNode);
 
-            let link = {
-               source: newId,
-               target: "1"
-            };
-            this.data.links.push(link);
+            if (this.id > 1) {
+               let link = {
+                  source: newId,
+                  target: "1"
+               };
+               this.data.links.push(link);
+            }
 
-            this.linkedGraph.updateGraph(this.data);
+
+            // this.linkedGraph.updateGraph(this.data);
+            this.editNode(newNode, e);
          },
          isOverTrash(pos) {
             let overTrash = false;
