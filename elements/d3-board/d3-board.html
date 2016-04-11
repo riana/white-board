@@ -3,7 +3,8 @@
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
-
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../../bower_components/paper-styles/paper-styles.html">
 
 <link rel="import" href="./linked-graph.html">
@@ -50,6 +51,8 @@
          #stickEditor {
             position: absolute;
             visibility: hidden;
+            background: red;
+            min-width: 100px;
          }
 
          #stickEditor.visible {
@@ -59,7 +62,6 @@
          .editor-content {
             margin: 10px;
          }
-
       </style>
 
       <iron-ajax auto url="/elements/d3-board/test.json" handle-as="json" on-response="handleResponse" debounce-duration="300"></iron-ajax>
@@ -70,8 +72,10 @@
          </div>
 
          <paper-material id="stickEditor">
-            <div class="editor-content">
-               <paper-textarea id="stickTextEditor" label="Text textarea" value="{{selectedStick.text}}" no-label-float></paper-textarea>
+            <!-- <div>value="{{selectedNode.text}}" -->
+            <!-- </div> -->
+            <div id="editorContent" class="editor-content">
+               <paper-textarea id="stickTextEditor" label="Text textarea" value="{{selectedNode.text}}" no-label-float></paper-textarea>
             </div>
          </paper-material>
 
@@ -82,13 +86,25 @@
       "use strict";
       Polymer({
          is: "d3-board",
+         properties: {
+            selectedNode: {
+               type: Object,
+               value: {}
+            }
+         },
          ready() {
             this.linkedGraph = new LinkedGraph("#d3Board");
             this.linkedGraph.pencilFilter = false;
 
             this.linkedGraph.onBoardClicked = (e, pos) => {
                console.log("onBoardClicked : ", e);
-               this._addNode(pos);
+               if (this.editing) {
+                  this.stopEditNode();
+                  this.linkedGraph.updateGraph(this.data);
+               } else {
+                  this._addNode(pos);
+               }
+
             };
 
             this.linkedGraph.onDragItem = (pos, item) => {
@@ -123,46 +139,24 @@
             }
          },
 
-         editNode(node){
-            console.log("editNode");
-            // this.selectedNode = node;
-            // this.$.stickEditor.classList.add("visible");
-            // this.$.stickEditor.style.top = '' + node.y + 'px';
-            // this.$.stickEditor.style.left = '' + node.x + 'px';
+         editNode(node) {
+            this.editing = true;
+            this.selectedNode = node;
+            this.$.stickEditor.classList.add("visible");
+            let x = node.x - this.$.stickEditor.clientWidth / 2;
+            let y = node.y - this.$.stickEditor.clientHeight / 2;
+            this.$.stickEditor.style.top = '' + y + 'px';
+            this.$.stickEditor.style.left = '' + x + 'px';
+         },
+         stopEditNode() {
+            this.editing = false;
+            this.$.stickEditor.classList.remove("visible");
          },
          handleResponse(e) {
             let data = e.detail.response;
             this.linkedGraph.updateGraph(data);
             let updateCounter = 0;
             this.data = data;
-            let updateTask = setInterval(() => {
-               data.nodes[0].x = data.nodes[0].x + 40;
-               updateCounter++;
-
-               if (updateCounter == 5) {
-                  data.nodes.push({
-                     id: "2",
-                     text: "new Node",
-                     x: 100,
-                     y: 250
-                  })
-
-                  data.links.push({
-                     source: "1",
-                     target: "2"
-                  });
-               }
-
-               if (updateCounter >= 10) {
-
-                  data.nodes.splice(0, 1);
-                  data.links.splice(0, 1);
-               }
-               if (updateCounter >= 10) {
-                  clearInterval(updateTask);
-               }
-               this.linkedGraph.updateGraph(data);
-            }, 100);
          },
          _addNode(e) {
             if (!this.id) {
