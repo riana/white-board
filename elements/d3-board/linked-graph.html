@@ -24,9 +24,41 @@
          this.pencilFilter = false;
          var self = this;
 
+         self.scale = 1;
+         self.translate = [0, 0];
+
+         function zoomed() {
+            self.container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+            self.scale = d3.event.scale;
+            self.translate = d3.event.translate;
+         }
+
+         function getScreenCoords(x, y, translate, scale) {
+            var xn = translate[0] + x * scale;
+            var yn = translate[1] + y * scale;
+            return {
+               x: xn,
+               y: yn
+            };
+         }
+
+         function getDiagramCoords(x, y, translate, scale) {
+            var xn =  (x - translate[0])/ scale ;
+            var yn =  (y - translate[1]) / scale ;
+            return {
+               x: xn,
+               y: yn
+            };
+         }
+
+         var zoom = d3.behavior.zoom()
+            .scaleExtent([0.1, 1.5])
+            .on("zoom", zoomed);
+
          this.svg = d3.select(elSelector).append("svg")
             .attr("width", width)
             .attr("height", height)
+            .call(zoom)
             .on("mousedown", function(e) {
                this.touchStartDate = d3.event.timeStamp;
             })
@@ -47,8 +79,9 @@
                   return inside;
                });
                if (dt < 50 && pickedNodes.length === 0) {
-                  console.log('click on board : ', d3.event, pickedNodes);
-                  self.onBoardClicked(d3.event);
+                  let coords = getDiagramCoords(d3.event.x, d3.event.y, self.translate, self.scale);
+                  console.log('click on board : ', d3.event, coords);
+                  self.onBoardClicked(d3.event, coords);
                }
 
                // console.log("touch end on board : ", dt);
@@ -72,9 +105,10 @@
             .attr("xChannelSelector", "R")
             .attr("in", "SourceGraphic");
 
+         this.container = this.svg.append("g");
 
-         this.linksLayer = this.svg.append("g");
-         this.nodesLayer = this.svg.append("g");
+         this.linksLayer = this.container.append("g");
+         this.nodesLayer = this.container.append("g");
 
 
          this.drag = d3.behavior.drag()
@@ -88,15 +122,15 @@
 
                self.updateGraph(self.data);
                if (self.onDragItem) {
-                  self.onDragItem({
-                        x: d3.event.x,
-                        y: d3.event.y
-                     },
+                  let coords = getScreenCoords(d3.event.x, d3.event.y, self.translate, self.scale);
+                  self.onDragItem(coords,
                      d);
                }
+               d3.event.sourceEvent.stopPropagation();
             })
             .on('dragstart', function(d, i) {
                self.state = LinkedGraphStates.DRAGGING_ITEM;
+               d3.event.sourceEvent.stopPropagation();
             })
             .on('dragend', function(d, i) {
                if (self.onDragItemEnd) {

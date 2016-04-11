@@ -86,9 +86,9 @@
             this.linkedGraph = new LinkedGraph("#d3Board");
             this.linkedGraph.pencilFilter = false;
 
-            this.linkedGraph.onBoardClicked = (e) => {
+            this.linkedGraph.onBoardClicked = (e, pos) => {
                console.log("onBoardClicked : ", e);
-               this._addNode(e);
+               this._addNode(pos);
             };
 
             this.linkedGraph.onDragItem = (pos, item) => {
