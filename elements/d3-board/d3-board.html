@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
@@ -12,15 +11,18 @@
 
 <link rel="import" href="./linked-graph.html">
 
+
 <dom-module id="d3-board">
 
    <template>
       <style is="custom-style">
          :host {
             display: block;
+            position: relative;
          }
 
          #d3Board {
+            position: absolute;
             width: 100%;
             height: 100%;
             top: 0;
@@ -78,8 +80,6 @@
          }
       </style>
 
-      <iron-ajax auto url="/elements/d3-board/test.json" handle-as="json" on-response="handleResponse" debounce-duration="300"></iron-ajax>
-
       <div id="d3Board">
          <div id="trash">
             <iron-icon id="trashIcon" icon="delete"></iron-icon>
@@ -110,9 +110,18 @@
             selectedNode: {
                type: Object,
                value: {}
+            },
+            data: {
+               type: Object,
+               value: {
+                  nodes: [],
+                  links: []
+               },
+               notify: true,
+               observer: '_dataUpdated'
             }
          },
-         ready() {
+         attached() {
             this.linkedGraph = new LinkedGraph("#d3Board");
             this.linkedGraph.pencilFilter = false;
 
@@ -157,8 +166,17 @@
             this.linkedGraph.onNodeClicked = (node, screenPos) => {
                this.editNode(node, screenPos);
             }
+            this.linkedGraph.updateGraph(this.data);
          },
-
+         _dataUpdated() {
+            if (this.linkedGraph){
+               this.linkedGraph.updateGraph(this.data);
+            }else {
+               this.debounce('upd', ()=> {
+                  this.linkedGraph.updateGraph(this.data);
+               }, 1000);
+            }
+         },
          editNode(node, screenPos) {
             this.editing = true;
             this.selectedNode = node;
@@ -194,26 +212,26 @@
 
 
             let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
-            let scaleY = this.selectedNode.height* this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+            let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
             this.animationConfig['startEditCard'] = [{
-               name: 'transform-animation',
-               node: this.$.stickEditor,
-               transformOrigin: '50% 50%',
-               transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
-               transformFrom: 'scale(1)',
-               timing: {
-                  duration: 300
+                  name: 'transform-animation',
+                  node: this.$.stickEditor,
+                  transformOrigin: '50% 50%',
+                  transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
+                  transformFrom: 'scale(1)',
+                  timing: {
+                     duration: 300
+                  }
+               }, {
+                  name: 'fade-out-animation',
+                  node: this.$.stickEditor,
+                  timing: {
+                     delay: 150,
+                     duration: 200
+                  }
                }
-            },{
-               name: 'fade-out-animation',
-               node: this.$.stickEditor,
-               timing: {
-                  delay: 150,
-                  duration: 200
-               }
-            }
 
-         ];
+            ];
             this.playAnimation('startEditCard');
             this.debounce("stop", () => {
                this.editing = false;
@@ -222,12 +240,6 @@
 
 
 
-         },
-         handleResponse(e) {
-            let data = e.detail.response;
-            this.linkedGraph.updateGraph(data);
-            let updateCounter = 0;
-            this.data = data;
          },
          _addNode(e, pos) {
             if (!this.id) {
@@ -267,7 +279,7 @@
             }
 
             return overTrash;
-         },
+         }
 
 
       });

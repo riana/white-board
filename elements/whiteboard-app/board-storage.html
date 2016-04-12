@@ -12,8 +12,8 @@
          }
       </style>
 
-      <iron-ajax id="loadAjax" url="/api/load" handle-as="json" on-response="_loaded" last-response="{{loadedData}}" debounce-duration="300"></iron-ajax>
-      <iron-ajax id="saveAjax" method="POST" content-type="application/json" url="/api/save" on-response="_saved" debounce-duration="300"></iron-ajax>
+      <iron-ajax id="loadAjax" url="http://localhost:32101/api/load" handle-as="json" on-response="_loaded" last-response="{{loadedData}}" debounce-duration="300"></iron-ajax>
+      <iron-ajax id="saveAjax" url="http://localhost:32101/api/save" method="POST" content-type="application/json"  on-response="_saved" debounce-duration="300"></iron-ajax>
    </template>
 
    <script>
@@ -30,10 +30,11 @@
             if (this.loadedData.error) {
                let newBoard = {
                   title: "Empty board",
-                  sticks: []
+                  nodes: [],
+                  links: []
                };
                this.fire("loaded", newBoard);
-               this.save(".default", newBoard);
+               this.save("boards/.default", newBoard);
             } else {
                this.fire("loaded", this.loadedData);
             }

@@ -1,6 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 
-<script type="text/javascript" src="../../bower_components/d3/d3.js"></script>
+
 
 <style>
    .node-html {
@@ -14,9 +14,10 @@
 
    .node-html-content {
       margin: 10px;
-
    }
 </style>
+
+<script type="text/javascript" src="../../bower_components/d3/d3.js"></script>
 
 <script>
    const LinkedGraphStates = {
@@ -44,6 +45,9 @@
    }
 
 
+   if (typeof require === "function") {
+      var d3 = require("d3");
+   }
 
    class LinkedGraph {
 
@@ -61,6 +65,8 @@
             self.scale = d3.event.scale;
             self.translate = d3.event.translate;
          }
+
+
 
 
          var zoom = d3.behavior.zoom()
@@ -265,7 +271,7 @@
                   .attr("height", height)
                   .attr("transform", function(d) {
                      let bbox = this.getBBox()
-                     return "translate(" + [- width / 2, -height / 2] + ")"
+                     return "translate(" + [-width / 2, -height / 2] + ")"
                   });
 
             });
@@ -291,7 +297,7 @@
          node.select(".node-html").html(function(d) {
             var html = d.text.split("\n");
             return html.join("<br>");
-         }) .attr("updateStyle", function(d) {
+         }).attr("updateStyle", function(d) {
             // insertLinebreaks(d);
             // this.classList.add("green-card");
             this.style.color = "#FFFFFF";
