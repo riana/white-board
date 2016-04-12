@@ -7,6 +7,9 @@
 <link rel="import" href="../../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../../bower_components/paper-styles/paper-styles.html">
 
+<link rel="import" href="../../bower_components/neon-animation/neon-animations.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation-runner-behavior.html">
+
 <link rel="import" href="./linked-graph.html">
 
 <dom-module id="d3-board">
@@ -51,7 +54,7 @@
          #stickEditor {
             position: absolute;
             visibility: hidden;
-            background: red;
+            background: blue;
             max-width: 250px;
          }
 
@@ -69,7 +72,8 @@
 
          #stickTextEditor {
             --paper-input-container-input: {
-               font-size: 14px;
+               font-size: 16px;
+               color: white;
             }
          }
       </style>
@@ -96,7 +100,13 @@
       "use strict";
       Polymer({
          is: "d3-board",
+         behaviors: [
+            Polymer.NeonAnimationRunnerBehavior
+         ],
          properties: {
+            animationConfig: {
+               value: {}
+            },
             selectedNode: {
                type: Object,
                value: {}
@@ -153,6 +163,26 @@
             this.editing = true;
             this.selectedNode = node;
             this.$.stickEditor.classList.add("visible");
+
+            this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = "white";
+            let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
+            let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+            this.animationConfig['startEditCard'] = {
+               name: 'transform-animation',
+               node: this.$.stickEditor,
+               transformOrigin: '50% 50%',
+               transformFrom: 'scale(' + scaleX + ',' + scaleY + ')',
+               transformTo: 'scale(1)',
+               timing: {
+                  duration: 300
+               }
+            };
+            this.playAnimation('startEditCard');
+            // this.debounce("stop", () => {
+            //    this.$.stickEditor.classList.remove("visible");
+            // }, 200);
+
+
             let x = screenPos.x - this.$.stickEditor.clientWidth / 2;
             let y = screenPos.y - this.$.stickEditor.clientHeight / 2;
             this.$.stickEditor.style.top = '' + y + 'px';
@@ -161,8 +191,37 @@
          stopEditNode() {
             this.selectedNode.width = this.$.editorContent.clientWidth + 10;
             this.selectedNode.height = this.$.editorContent.clientHeight + 10;
-            this.editing = false;
-            this.$.stickEditor.classList.remove("visible");
+
+
+            let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
+            let scaleY = this.selectedNode.height* this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+            this.animationConfig['startEditCard'] = [{
+               name: 'transform-animation',
+               node: this.$.stickEditor,
+               transformOrigin: '50% 50%',
+               transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
+               transformFrom: 'scale(1)',
+               timing: {
+                  duration: 300
+               }
+            },{
+               name: 'fade-out-animation',
+               node: this.$.stickEditor,
+               timing: {
+                  delay: 150,
+                  duration: 200
+               }
+            }
+
+         ];
+            this.playAnimation('startEditCard');
+            this.debounce("stop", () => {
+               this.editing = false;
+               this.$.stickEditor.classList.remove("visible");
+            }, 300);
+
+
+
          },
          handleResponse(e) {
             let data = e.detail.response;
@@ -178,19 +237,21 @@
             let newId = this.id;
             let newNode = {
                id: "" + newId,
-               text: "new Node",
+               text: "Put your text here",
                x: pos.x,
-               y: pos.y
+               y: pos.y,
+               width: 50,
+               height: 39
             };
             this.data.nodes.push(newNode);
 
-            if (this.id > 1) {
-               let link = {
-                  source: newId,
-                  target: "1"
-               };
-               this.data.links.push(link);
-            }
+            // if (this.id > 1) {
+            //    let link = {
+            //       source: newId,
+            //       target: "1"
+            //    };
+            //    this.data.links.push(link);
+            // }
 
 
             // this.linkedGraph.updateGraph(this.data);

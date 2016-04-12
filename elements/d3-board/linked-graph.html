@@ -146,7 +146,7 @@
                d3.event.sourceEvent.stopPropagation();
             })
             .on('dragend', function(d, i) {
-               if (self.onDragItemEnd) {
+               if (self.onDragItemEnd && self.lastDrag) {
                   let coords = getScreenCoords(self.lastDrag.x, self.lastDrag.y, self.translate, self.scale);
                   self.onDragItemEnd(coords,
                      d);
