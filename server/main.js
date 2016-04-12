@@ -23,10 +23,11 @@ function createWindow () {
   mainWindow = new BrowserWindow({width: 800, height: 600});
 
   // and load the index.html of the app.
-  mainWindow.loadURL("http://127.0.0.1:" +internalPort + "/");
+  // mainWindow.loadURL("http://127.0.0.1:" +internalPort + "/");
+  mainWindow.loadURL("file://" +__dirname + "/../index.html");
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function() {
