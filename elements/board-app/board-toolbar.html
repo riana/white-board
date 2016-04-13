@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+
+
+<dom-module id="board-toolbar">
+
+    <template>
+      <style is="custom-style">
+         :host {
+            display: block;
+         }
+
+         #boardToolbar {
+            background: var(--paper-grey-300);
+            color: var(--paper-blue-900);
+         }
+
+         .board-title {
+            font-family: "Roboto";
+            margin: 10px 20px;
+         }
+      </style>
+
+      <!--Template goes here-->
+      <div id="boardToolbar" class="layout horizontal center">
+         <div class="board-title">{{title}}</div>
+         <paper-icon-button icon="save" on-tap="_save"></paper-icon-button>
+         <div class="flex"></div>
+      </div>
+    </template>
+
+    <script>
+      "use strict";
+         Polymer({
+            is: "board-toolbar",
+            properties: {
+               title: {
+                  type: String,
+                  value: ''
+               }
+            },
+            _save(){
+               this.fire('save');
+            }
+        });
+    </script>
+
+</dom-module>

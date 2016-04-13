@@ -5,7 +5,9 @@
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 
 <link rel="import" href="../whiteboard-app/board-storage.html">
+<link rel="import" href="./board-toolbar.html">
 <link rel="import" href="../d3-board/d3-board.html">
+
 
 <dom-module id="board-app">
 
@@ -15,26 +17,10 @@
             display: block;
             @apply(--layout-vertical);
          }
-
-         #boardToolbar {
-            background: var(--paper-grey-300);
-            color: var(--paper-blue-900);
-         }
-
-         .board-title {
-            font-family: "Roboto";
-            margin: 10px 20px;
-         }
-
       </style>
 
       <board-storage id="storage" on-loaded="_loaded"></board-storage>
-
-      <div id="boardToolbar" class="layout horizontal center">
-         <div class="board-title">{{title}}</div>
-         <paper-icon-button icon="save" on-tap="_save"></paper-icon-button>
-         <div class="flex"></div>
-      </div>
+      <board-toolbar title="[[title]]" on-save="_save"></board-toolbar>
       <d3-board class="flex" data="{{boardContent}}"></d3-board>
     </template>
 
