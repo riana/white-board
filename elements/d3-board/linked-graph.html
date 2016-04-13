@@ -51,6 +51,8 @@
 
    class LinkedGraph {
 
+
+
       constructor(elSelector) {
          let width = 2048;
          let height = 2048;
@@ -164,6 +166,10 @@
 
             });
          this.data = {}
+      }
+
+      getDiagramCoords(x, y) {
+         return getDiagramCoords(x, y, this.translate, this.scale);
       }
 
       updateEdges(data) {
@@ -300,8 +306,8 @@
          }).attr("updateStyle", function(d) {
             // insertLinebreaks(d);
             // this.classList.add("green-card");
-            this.style.color = "#FFFFFF";
-            this.style.background = "#0000FF";
+            this.style.color = d.style ? d.style.color : "#FFFFFF";
+            this.style.background = d.style ? d.style.background : "#0000FF";
             // this.style.width = '300px';
             // this.style.height = '70px';
          });

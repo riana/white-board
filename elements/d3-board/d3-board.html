@@ -130,10 +130,7 @@
                if (this.editing) {
                   this.stopEditNode();
                   this.linkedGraph.updateGraph(this.data);
-               } else {
-                  this._addNode(e, pos);
                }
-
             };
 
             this.linkedGraph.onDragItem = (pos, item) => {
@@ -182,7 +179,9 @@
             this.selectedNode = node;
             this.$.stickEditor.classList.add("visible");
 
-            this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = "white";
+            this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = node.style ? node.style.color : "#FFFFFF";
+            this.$.stickEditor.style.background = node.style ? node.style.background : "#0000FF";
+            
             let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
             let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
             this.animationConfig['startEditCard'] = {
@@ -240,6 +239,9 @@
 
 
 
+         },
+         getPositionOnBoard(x, y){
+            return this.linkedGraph.getDiagramCoords(x,y);
          },
          _addNode(e, pos) {
             if (!this.id) {

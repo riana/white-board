@@ -3,6 +3,8 @@
 <link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
 
 <link rel="import" href="../whiteboard-app/board-storage.html">
 <link rel="import" href="./board-toolbar.html">
@@ -11,53 +13,134 @@
 
 <dom-module id="board-app">
 
-    <template>
+   <template>
       <style is="custom-style">
          :host {
             display: block;
             @apply(--layout-vertical);
          }
+
+         #controlBar {
+            background: var(--paper-grey-800);
+            padding-top: 10px;
+         }
+
+         .add-button {
+            margin: 4px;
+         }
+
       </style>
 
       <board-storage id="storage" on-loaded="_loaded"></board-storage>
-      <board-toolbar title="[[title]]" on-save="_save"></board-toolbar>
-      <d3-board class="flex" data="{{boardContent}}"></d3-board>
-    </template>
 
-    <script>
+      <board-toolbar title="[[title]]" on-save="_save"></board-toolbar>
+      <div class="layout horizontal flex">
+         <div id="controlBar" class="layout vertical center">
+            <template is="dom-repeat" items="[[stickStyles]]" as="stickStyle">
+               <paper-icon-button icon="editor:short-text" class="add-button" style$="{{_addStickStyle(stickStyle)}}" draggable="true" on-track="_addDrag"></paper-icon-button>
+            </template>
+         </div>
+         <d3-board id="board" class="flex" data="{{boardContent}}"></d3-board>
+      </div>
+   </template>
+
+   <script>
       "use strict";
-         Polymer({
-            is: "board-app",
-            properties: {
-               title: {
-                  type: String,
-                  value: "Default Board"
-               },
-               boardContent : {
-                  type: Object,
-                  value: {
-                     nodes: [],
-                  	links: []
-                  }
-               },
-               boardId: {
-                  type: String,
-                  value: "boards/.default"
+      Polymer({
+         is: "board-app",
+         properties: {
+            title: {
+               type: String,
+               value: "Default Board"
+            },
+            boardContent: {
+               type: Object,
+               value: {
+                  nodes: [],
+                  links: []
                }
             },
-            attached() {
-               this.$.storage.load(this.boardId);
+            boardId: {
+               type: String,
+               value: "boards/.default"
             },
-            _loaded(e) {
-               let data = e.detail;
-               if (data) {
-                  this.boardContent = data;
-               }
-            },
-            _save() {
-               this.$.storage.save(this.boardId, this.boardContent);
+            stickStyles: {
+               type: Array,
+               value: [{
+                  name: "white",
+                  color: "#000000",
+                  background: "#FFFFFF"
+               }, {
+                  name: "yellow",
+                  color: "#000000",
+                  background: "#FFEB3B"
+               }, {
+                  name: "blue",
+                  color: "#FFFFFF",
+                  background: "#039BE5"
+               }, {
+                  name: "green",
+                  color: "#FFFFFF",
+                  background: "#689F38"
+               }, {
+                  name: "purple",
+                  color: "#FFFFFF",
+                  background: "#7E57C2"
+               }, {
+                  name: "red",
+                  color: "#FFFFFF",
+                  background: "#F44336"
+               }, {
+                  name: "orange",
+                  color: "#FFFFFF",
+                  background: "#EF6C00"
+               }]
             }
-        });
-    </script>
+         },
+         attached() {
+            this.$.storage.load(this.boardId);
+         },
+         _loaded(e) {
+            let data = e.detail;
+            if (data) {
+               this.boardContent = data;
+            }
+         },
+         _save() {
+            this.$.storage.save(this.boardId, this.boardContent);
+         },
+         _addDrag(e) {
+            if (e.detail.state === 'end') {
+               let pos = this.$.board.getPositionOnBoard(e.detail.x, e.detail.y);
+
+               if (!this.id) {
+                  this.id = 0;
+               }
+               this.id++;
+               let newId = this.id;
+               let newNode = {
+                  id: "" + newId,
+                  text: "Put your text here",
+                  x: pos.x,
+                  y: pos.y,
+                  width: 80,
+                  height: 39,
+                  style: e.model.stickStyle
+               };
+               this.boardContent.nodes.push(newNode);
+               this.$.board._dataUpdated();
+
+               this.$.board.editNode(newNode, {
+                  x : e.detail.x,
+                  y : e.detail.y
+               });
+            }
+
+         },
+         _addStickStyle(stickStyle) {
+            return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
+         },
+      });
+   </script>
 
 </dom-module>
