@@ -29,7 +29,8 @@
          },
          ready(){
             if (typeof require === "function") {
-               this.fileStorage = require("../server/storage.js");
+               // this.fileStorage = require("../server/storage.js");
+               this.fileStorage = require("./server/storage.js");
             }
          },
          _loaded(e) {
@@ -48,7 +49,10 @@
          },
          load(path) {
             if (this.fileStorage) {
-               this.fileStorage.load(path);
+               this.fileStorage.load(path, (data) => {
+                  this.loadedData = JSON.parse(data);
+                  this._loaded();
+               });
             } else {
                this.$.loadAjax.params = {
                   id: path
@@ -61,7 +65,9 @@
          },
          save(path, data) {
             if (this.fileStorage) {
-               this.fileStorage.save(path, data);
+               this.fileStorage.save(path, data, () => {
+                  this._saved();
+               });
             }else {
                this.$.saveAjax.params = {
                   id: path
