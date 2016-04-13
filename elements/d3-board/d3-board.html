@@ -86,8 +86,6 @@
          </div>
 
          <paper-material id="stickEditor">
-            <!-- <div>value="{{selectedNode.text}}" -->
-            <!-- </div> -->
             <div id="editorContent" class="editor-content">
                <paper-textarea id="stickTextEditor" label="Text textarea" value="{{selectedNode.text}}" no-label-float></paper-textarea>
             </div>
@@ -126,7 +124,6 @@
             this.linkedGraph.pencilFilter = false;
 
             this.linkedGraph.onBoardClicked = (e, pos) => {
-               console.log("onBoardClicked : ", e);
                if (this.editing) {
                   this.stopEditNode();
                   this.linkedGraph.updateGraph(this.data);
@@ -154,7 +151,6 @@
                      let index = this.data.links.indexOf(link);
                      this.data.links.splice(index, 1);
                   });
-
                   this.linkedGraph.updateGraph(this.data);
                }
                this.$.trashIcon.classList.remove("active");
@@ -169,7 +165,7 @@
             if (this.linkedGraph){
                this.linkedGraph.updateGraph(this.data);
             }else {
-               this.debounce('upd', ()=> {
+               this.debounce('data-updated', ()=> {
                   this.linkedGraph.updateGraph(this.data);
                }, 1000);
             }
@@ -181,7 +177,7 @@
 
             this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = node.style ? node.style.color : "#FFFFFF";
             this.$.stickEditor.style.background = node.style ? node.style.background : "#0000FF";
-            
+
             let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
             let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
             this.animationConfig['startEditCard'] = {
@@ -195,10 +191,6 @@
                }
             };
             this.playAnimation('startEditCard');
-            // this.debounce("stop", () => {
-            //    this.$.stickEditor.classList.remove("visible");
-            // }, 200);
-
 
             let x = screenPos.x - this.$.stickEditor.clientWidth / 2;
             let y = screenPos.y - this.$.stickEditor.clientHeight / 2;
@@ -208,7 +200,6 @@
          stopEditNode() {
             this.selectedNode.width = this.$.editorContent.clientWidth + 10;
             this.selectedNode.height = this.$.editorContent.clientHeight + 10;
-
 
             let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
             let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
@@ -229,47 +220,15 @@
                      duration: 200
                   }
                }
-
             ];
             this.playAnimation('startEditCard');
             this.debounce("stop", () => {
                this.editing = false;
                this.$.stickEditor.classList.remove("visible");
             }, 300);
-
-
-
          },
          getPositionOnBoard(x, y){
             return this.linkedGraph.getDiagramCoords(x,y);
-         },
-         _addNode(e, pos) {
-            if (!this.id) {
-               this.id = 0;
-            }
-            this.id++;
-            let newId = this.id;
-            let newNode = {
-               id: "" + newId,
-               text: "Put your text here",
-               x: pos.x,
-               y: pos.y,
-               width: 50,
-               height: 39
-            };
-            this.data.nodes.push(newNode);
-
-            // if (this.id > 1) {
-            //    let link = {
-            //       source: newId,
-            //       target: "1"
-            //    };
-            //    this.data.links.push(link);
-            // }
-
-
-            // this.linkedGraph.updateGraph(this.data);
-            this.editNode(newNode, e);
          },
          isOverTrash(pos) {
             let overTrash = false;
@@ -279,11 +238,8 @@
                overTrash = overTrash && (pos.x > bounds.left && pos.x < (bounds.left + bounds.width));
                overTrash = overTrash && (pos.y > bounds.top && pos.x < (bounds.top + bounds.height));
             }
-
             return overTrash;
          }
-
-
       });
    </script>
 

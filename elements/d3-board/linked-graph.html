@@ -67,12 +67,9 @@
             self.scale = d3.event.scale;
             self.translate = d3.event.translate;
          }
-
-
-
-
+         
          var zoom = d3.behavior.zoom()
-            .scaleExtent([0.1, 1])
+            .scaleExtent([0.1, 1.5])
             .on("zoom", zoomed);
 
          this.svg = d3.select(elSelector).append("svg")

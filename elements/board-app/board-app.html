@@ -6,13 +6,12 @@
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
 
-<link rel="import" href="../whiteboard-app/board-storage.html">
+<link rel="import" href="./board-storage.html">
 <link rel="import" href="./board-toolbar.html">
 <link rel="import" href="../d3-board/d3-board.html">
 
 
 <dom-module id="board-app">
-
    <template>
       <style is="custom-style">
          :host {
@@ -28,7 +27,6 @@
          .add-button {
             margin: 4px;
          }
-
       </style>
 
       <board-storage id="storage" on-loaded="_loaded"></board-storage>
@@ -37,7 +35,7 @@
       <div class="layout horizontal flex">
          <div id="controlBar" class="layout vertical center">
             <template is="dom-repeat" items="[[stickStyles]]" as="stickStyle">
-               <paper-icon-button icon="editor:short-text" class="add-button" style$="{{_addStickStyle(stickStyle)}}" draggable="true" on-track="_addDrag"></paper-icon-button>
+               <paper-icon-button icon="editor:short-text" class="add-button" style$="{{_getAddStickStyle(stickStyle)}}" draggable="true" on-track="_onDropStick"></paper-icon-button>
             </template>
          </div>
          <d3-board id="board" class="flex" data="{{boardContent}}"></d3-board>
@@ -109,7 +107,7 @@
          _save() {
             this.$.storage.save(this.boardId, this.boardContent);
          },
-         _addDrag(e) {
+         _onDropStick(e) {
             if (e.detail.state === 'end') {
                let pos = this.$.board.getPositionOnBoard(e.detail.x, e.detail.y);
 
@@ -137,7 +135,7 @@
             }
 
          },
-         _addStickStyle(stickStyle) {
+         _getAddStickStyle(stickStyle) {
             return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
          },
       });
