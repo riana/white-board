@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-ripple/paper-ripple.html">
+
+<link rel="stylesheet" href="../../bower_components/font-awesome/css/font-awesome.css" media="screen" title="no title" charset="utf-8">
+
+<dom-module id="fa-button">
+
+    <template>
+      <style is="custom-style">
+         :host {
+            display: block;
+         }
+
+         .flat-button {
+            @apply(--layout-vertical);
+            @apply(--layout-center);
+            @apply(--layout-center-justified);
+            overflow: hidden;
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--paper-grey-100);
+         }
+         .draggable-pointer {
+            cursor: copy;
+         }
+         .simple-pointer {
+            cursor: pointer;
+         }
+      </style>
+
+      <!--Template goes here-->
+      <div class="flat-button">
+         <i class$="fa {{_getIconClass(icon)}} {{_draggableClass(draggable)}}"></i>
+         <paper-ripple></paper-ripple>
+      </div>
+    </template>
+
+    <script>
+      "use strict";
+         Polymer({
+            is: "fa-button",
+            properties: {
+               icon : {
+                  type: String,
+                  value: "fa-bars"
+               },
+               draggable: {
+                  type: Boolean,
+                  value: false
+               }
+            },
+            _draggableClass(draggable){
+               return draggable? 'draggable-pointer' : 'simple-pointer';
+            },
+            _getIconClass(icon){
+               return icon;
+            }
+        });
+    </script>
+
+</dom-module>

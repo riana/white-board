@@ -13,7 +13,8 @@
     "crossroads": "~0.12.2",
     "hasher": "~1.2.0",
     "google-apis": "^1.1.5",
-    "d3": "~3.5.16"
+    "d3": "~3.5.16",
+    "font-awesome": "~4.6.1"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"
