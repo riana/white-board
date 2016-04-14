@@ -39,6 +39,23 @@ gulp.task('pkg', ['install'], function (cb) {
 	})
 });
 
+gulp.task('pkg-linux', ['install'], function (cb) {
+	var opts = {
+		arch: "all",
+		dir: "dist",
+		platform: "linux",
+		arch: 'x64',
+		overwrite: true,
+		out: "bin-dist"
+	};
+	packager(opts, function done(err, appPath) {
+		if(err){
+			console.error(err);
+		}
+		cb();
+	})
+});
+
 gulp.task('install', ['default'], function (cb) {
 	return gulp.src([distDir + '/package.json'])
 	  .pipe(install({production: true}));
