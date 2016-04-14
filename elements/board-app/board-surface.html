@@ -57,16 +57,20 @@
             position: absolute;
             visibility: hidden;
             background: blue;
-            max-width: 250px;
-         }
 
-         #editorContent {
-            min-width: 100px;
          }
 
          #stickEditor.visible {
             visibility: visible;
          }
+
+
+
+         #editorContent {
+            min-width: 100px;
+         }
+
+
 
          .editor-content {
             margin: 10px;
@@ -78,6 +82,17 @@
                color: white;
             }
          }
+
+         .sticky {
+            max-width: 250px;
+         }
+
+         .sticky > #editorContent > #stickTextEditor {
+            --paper-input-container-input: {
+               font-size: 18px;
+               color: var(--paper-grey-900);
+            }
+         }
       </style>
 
       <div id="d3Board">
@@ -85,7 +100,7 @@
             <iron-icon id="trashIcon" icon="delete"></iron-icon>
          </div>
 
-         <paper-material id="stickEditor">
+         <paper-material id="stickEditor" class$="{{_editorStyle(selectedNode)}}">
             <div id="editorContent" class="editor-content">
                <paper-textarea id="stickTextEditor" label="Text textarea" value="{{selectedNode.text}}" no-label-float></paper-textarea>
             </div>
@@ -170,13 +185,17 @@
                }, 1000);
             }
          },
+         _editorStyle(selectedNode){
+            return selectedNode.type ? selectedNode.type : 'sticky';
+         },
          editNode(node, screenPos) {
             this.editing = true;
             this.selectedNode = node;
             this.$.stickEditor.classList.add("visible");
 
-            this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = node.style ? node.style.color : "#FFFFFF";
-            this.$.stickEditor.style.background = node.style ? node.style.background : "#0000FF";
+            this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = node.style ? node.style.color : "#000000";
+            // this.$.stickTextEditor.getElementsByTagName("textarea")[0].style['font-size'] = '32px';
+            this.$.stickEditor.style.background = node.style ? node.style.background : "white";
 
             let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
             let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;

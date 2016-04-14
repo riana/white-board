@@ -127,45 +127,55 @@
          _save() {
             this.$.storage.save(this.boardId, this.boardContent);
          },
+         _addNode(newNode, e) {
+            let pos = this.$.board.getPositionOnBoard(e.detail.x, e.detail.y);
+
+            if (!this.id) {
+               this.id = 0;
+            }
+            this.id++;
+            let newId = this.id;
+
+            newNode.id = "" + newId;
+            newNode.text = "Put your text here";
+            newNode.x = pos.x;
+            newNode.y = pos.y;
+            newNode.width = 80;
+            newNode.height = 39;
+
+
+
+            this.boardContent.nodes.push(newNode);
+            this.$.board._dataUpdated();
+
+            this.$.board.editNode(newNode, {
+               x: e.detail.x,
+               y: e.detail.y
+            });
+         },
          _onDropStick(e) {
             if (e.detail.state === 'end') {
-               let pos = this.$.board.getPositionOnBoard(e.detail.x, e.detail.y);
-
-               if (!this.id) {
-                  this.id = 0;
-               }
-               this.id++;
-               let newId = this.id;
                let newNode = {
-                  id: "" + newId,
-                  text: "Put your text here",
-                  x: pos.x,
-                  y: pos.y,
-                  width: 80,
-                  height: 39,
-                  style: e.model.stickStyle
+                  style : e.model.stickStyle
                };
-               this.boardContent.nodes.push(newNode);
-               this.$.board._dataUpdated();
-
-               this.$.board.editNode(newNode, {
-                  x: e.detail.x,
-                  y: e.detail.y
-               });
+               this._addNode(newNode, e);
             }
-
+         },
+         _onDropText(e) {
+            if (e.detail.state === 'end') {
+               let newNode = {
+                  type : "text"
+               };
+               this._addNode(newNode, e);
+            }
          },
          _getAddStickStyle(stickStyle) {
             return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
          },
          _insertImage() {
             console.log("_insertImage");
-         },
-         _onDropText(e) {
-            if (e.detail.state === 'end') {
-               console.log("_onDropText");
-            }
          }
+
       });
    </script>
 

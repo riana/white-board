@@ -4,17 +4,21 @@
 
 <style>
    .node-html {
+      padding: 10px;
       font-family: "Roboto";
       font-size: 14px;
-      padding: 10px;
-      box-sizing: border-box;
       cursor: pointer;
+      box-sizing: border-box;
       font-weight: lighter;
+   }
+
+   .node-sticky {
       box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
    }
 
-   .node-html-content {
-      margin: 10px;
+   .node-text {
+      font-size: 16px;
+      font-weight: bold;
    }
 </style>
 
@@ -243,9 +247,6 @@
             // .attr("height", 30)
             .append("xhtml:body")
             .append("div")
-            .attr("draggable", true)
-            // .attr("width", 100)
-            // .attr("height", 30)
             .on('click', function(d) {
                if (self.onNodeClicked) {
 
@@ -255,12 +256,20 @@
                d3.event.preventDefault();
                d3.event.stopPropagation();
             })
-            .attr("class", "node-html")
+            .attr("class", function(d) {
+               // let container = d3.select(this);
+               // console.log(d, container);
+               let style = "node-sticky";
+               if (d.type === "text") {
+                  style = "node-text";
+               }
+               return `node-html ${style}`;
+            })
             .append("div")
-            .attr("class", "node-html-content")
-            .html(function(d) {
-               return d.text;
-            });
+
+         .html(function(d) {
+            return d.text;
+         });
 
          node.select(".node-fo").each(function(d) {
 
@@ -279,7 +288,6 @@
                   });
 
             });
-
 
          });
 
@@ -304,8 +312,8 @@
          }).attr("updateStyle", function(d) {
             // insertLinebreaks(d);
             // this.classList.add("green-card");
-            this.style.color = d.style ? d.style.color : "#FFFFFF";
-            this.style.background = d.style ? d.style.background : "#0000FF";
+            this.style.color = d.style ? d.style.color : "#000000";
+            this.style.background = d.style ? d.style.background : "none";
             // this.style.width = '300px';
             // this.style.height = '70px';
          });
