@@ -49,7 +49,7 @@
 
       <board-storage id="storage" on-loaded="_loaded"></board-storage>
 
-      <board-toolbar title="[[title]]" on-save="_save"></board-toolbar>
+      <board-toolbar title="{{boardContent.title}}" on-save="_save"></board-toolbar>
       <div class="layout horizontal flex">
          <div id="controlBar" class="layout vertical center">
             <div class="controls-container">
@@ -73,13 +73,10 @@
       Polymer({
          is: "board-app",
          properties: {
-            title: {
-               type: String,
-               value: "Default Board"
-            },
             boardContent: {
                type: Object,
                value: {
+                  title: "My Board",
                   nodes: [],
                   links: []
                }
@@ -128,6 +125,7 @@
             let data = e.detail;
             if (data) {
                this.boardContent = data;
+               console.log(this.boardContent);
             }
          },
          _save() {
