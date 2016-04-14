@@ -12,6 +12,7 @@
          }
       </style>
 
+      <iron-ajax id="loadIndex" url="/api/load" handle-as="json" on-response="_boardsIndexloaded" last-response="{{boardIndex}}" debounce-duration="300"></iron-ajax>
       <iron-ajax id="loadAjax" url="/api/load" handle-as="json" on-response="_loaded" last-response="{{loadedData}}" debounce-duration="300"></iron-ajax>
       <iron-ajax id="saveAjax" url="/api/save" method="POST" content-type="application/json" on-response="_saved" debounce-duration="300"></iron-ajax>
    </template>
@@ -25,57 +26,108 @@
             loadedData: {
                type: "Object",
                value: {}
-            }
+            },
+            boardIndex: {
+               type: Array,
+               value: [],
+               notify: true
+            },
          },
-         ready(){
+         ready() {
             if (typeof require === "function") {
-               // this.fileStorage = require("../server/storage.js");
                this.fileStorage = require("./server/storage.js");
             }
+            this.startUp = true;
+            this.loadBoardsIndex();
+         },
+         loadBoardsIndex() {
+            if (this.fileStorage) {
+               this.fileStorage.load('_boardsIndex', (data) => {
+                  this.boardIndex = JSON.parse(data);
+                  this._boardsIndexloaded();
+               });
+            } else {
+               this.$.loadIndex.params = {
+                  id: '_boardsIndex'
+               };
+               this.$.loadIndex.generateRequest();
+            }
+         },
+         saveBoardsIndex() {
+            this._electSave('_boardsIndex', this.boardIndex);
+         },
+         _boardsIndexloaded(e) {
+
+            if (this.boardIndex.error) {
+               this.boardIndex = [];
+               this.saveBoardsIndex();
+            } else {
+               if (this.startUp && this.boardIndex.length > 0) {
+                  this.load(this.boardIndex[0].id);
+               }
+            }
+            this.startUp = false;
          },
          _loaded(e) {
             if (this.loadedData.error) {
-               let newBoard = {
-                  title: "Empty board",
-                  nodes: [],
-                  links: []
-               };
-               this.fire("loaded", newBoard);
-               this.save("boards/.default", newBoard);
+               console.error("Error loading board");
             } else {
                this.fire("loaded", this.loadedData);
             }
-
          },
          load(path) {
             if (this.fileStorage) {
-               this.fileStorage.load(path, (data) => {
+               this.fileStorage.load('boards/' + path, (data) => {
                   this.loadedData = JSON.parse(data);
                   this._loaded();
                });
             } else {
                this.$.loadAjax.params = {
-                  id: path
+                  id: 'boards/' + path
                };
                this.$.loadAjax.generateRequest();
             }
          },
+         updateIndex(data) {
+            let index = {
+               id: data.id,
+               title: data.title
+            };
+            let matchingBoards = this.boardIndex.filter(item => {
+               return item.id === data.id;
+            });
+            if (matchingBoards.length === 1) {
+               let oldBoardIndex = matchingBoards[0];
+               let index = this.boardIndex.indexOf(oldBoardIndex);
+               this.boardIndex.splice(index, 1);
+            }
+            this.boardIndex.unshift(index);
+            this.saveBoardsIndex();
+         },
          _saved(e) {
             console.log(e);
          },
-         save(path, data) {
+         save(data) {
+            this._electSave('boards/' + data.id, data);
+            this.updateIndex(data);
+         },
+         _electSave(path, data) {
             if (this.fileStorage) {
                this.fileStorage.save(path, data, () => {
                   this._saved();
                });
-            }else {
+            } else {
                this.$.saveAjax.params = {
                   id: path
                };
                this.$.saveAjax.body = data;
+               this.$.saveAjax.onResponse = () => {
+                  console.log("onResponse");
+               };
                this.$.saveAjax.generateRequest();
             }
          }
+
       });
    </script>
 

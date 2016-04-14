@@ -4,6 +4,7 @@
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/iron-icons/av-icons.html">
 
 <dom-module id="board-toolbar">
 
@@ -39,6 +40,10 @@
       <div id="boardToolbar" class="layout horizontal center">
          <paper-input class="board-title" value="{{title}}" no-label-float></paper-input>
          <paper-icon-button icon="save" on-tap="_save"></paper-icon-button>
+         <paper-icon-button icon="av:library-add" on-tap="_create"></paper-icon-button>
+         <paper-icon-button icon="folder-open" on-tap="_open"></paper-icon-button>
+
+
          <div class="flex"></div>
       </div>
    </template>
@@ -56,6 +61,12 @@
          },
          _save() {
             this.fire('save');
+         },
+         _open() {
+            this.fire('open');
+         },
+         _create() {
+            this.fire('create');
          }
       });
    </script>
