@@ -39,6 +39,7 @@
 
          .controls-container {
             margin-bottom: 20px;
+            color: var(--paper-grey-100);
          }
       </style>
 
@@ -54,7 +55,7 @@
             </div>
             <template is="dom-repeat" items="[[stickStyles]]" as="stickStyle">
                <paper-material elevation="2" class="add-button" draggable="true" on-track="_onDropStick">
-                  <paper-icon-button icon="editor:short-text" style$="{{_getAddStickStyle(stickStyle)}}"></paper-icon-button>
+                  <paper-icon-button icon="editor:short-text" style$="{{_getAddStickStyle(stickStyle)}}" no-ink></paper-icon-button>
                </paper-material>
             </template>
          </div>
@@ -156,7 +157,7 @@
          _onDropStick(e) {
             if (e.detail.state === 'end') {
                let newNode = {
-                  style : e.model.stickStyle
+                  style: e.model.stickStyle
                };
                this._addNode(newNode, e);
             }
@@ -164,7 +165,7 @@
          _onDropText(e) {
             if (e.detail.state === 'end') {
                let newNode = {
-                  type : "text"
+                  type: "text"
                };
                this._addNode(newNode, e);
             }
