@@ -39,6 +39,10 @@
 
          .controls-container {
             margin-bottom: 20px;
+
+         }
+
+         fa-button{
             color: var(--paper-grey-100);
          }
       </style>
@@ -50,9 +54,10 @@
          <div id="controlBar" class="layout vertical center">
             <div class="controls-container">
                <fa-button icon="fa-mouse-pointer"></fa-button>
-               <fa-button icon="fa-font" draggable="true" on-track="_onDropText"></fa-button>
                <fa-button icon="fa-image" on-tap="_insertImage"></fa-button>
             </div>
+
+            <fa-button icon="fa-font" draggable="true" on-track="_onDropText"></fa-button>
             <template is="dom-repeat" items="[[stickStyles]]" as="stickStyle">
                <paper-material elevation="2" class="add-button" draggable="true" on-track="_onDropStick">
                   <paper-icon-button icon="editor:short-text" style$="{{_getAddStickStyle(stickStyle)}}" no-ink></paper-icon-button>
