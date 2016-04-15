@@ -68,7 +68,7 @@
          <board-surface id="board" class="flex" data="{{boardContent}}"></board-surface>
       </div>
       <backdrop-view id="loadDialog">
-         <board-selector boards="[[boardsIndex]]" on-load="_loadBoard"></board-selector>
+         <board-selector boards="[[boardsIndex]]" on-load="_loadBoard" on-delete="_delete"></board-selector>
       </backdrop-view>
    </template>
 
@@ -139,6 +139,9 @@
          _open() {
             this.$.storage.loadBoardsIndex();
             this.$.loadDialog.open();
+         },
+         _delete(e){
+            this.$.storage.delete(e.detail);
          },
          _loadBoard(e){
             this.$.storage.updateIndex(e.detail);

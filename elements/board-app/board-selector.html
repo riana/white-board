@@ -3,9 +3,7 @@
 <link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
 
-<link rel="import" href="../../bower_components/paper-material/paper-material.html">
-<link rel="import" href="../../bower_components/paper-ripple/paper-ripple.html">
-
+<link rel="import" href="./board-selection-card.html">
 <dom-module id="board-selector">
 
    <template>
@@ -14,7 +12,8 @@
             display: block;
             width: 600px;
             height: 400px;
-            @apply(--layout-vertical);
+            background: white;
+
          }
 
          .title-container {
@@ -23,41 +22,28 @@
 
          .title {
             margin: 10px;
+            font-size: 20px;
             font-family: "Roboto";
             color: var(--paper-grey-50);
          }
 
-         paper-material {
-            margin: 2px 4px;
-            padding: 10px;
-            position: relative;
-            overflow: hidden;
-         }
-
-         .board-title {
-            font-family: "Roboto";
-            margin: 10px;
-         }
-
          #listContainer {
-            overflow: auto;
+            overflow: scroll;
+         }
+         board-selection-card {
+            margin: 2px 4px;
          }
       </style>
 
-      <div class="title-container layout horizontal">
-         <div class="title flex">Select board</div>
-      </div>
-
-      <div class="flex relative">
-         <div id="listContainer" class="fit">
-            <div id="listContent">
-            <template is="dom-repeat" items="[[boards]]" as="board">
-               <paper-material on-tap="_load">
-                  <div class="board-title">[[board.title]]</div>
-                  <paper-ripple></paper-ripple>
-               </paper-material>
-            </template>
+      <div class="layout vertical" style="height: 100%;">
+         <div class="title-container layout horizontal">
+            <div class="title flex">Select board</div>
          </div>
+
+         <div id="listContainer" class="flex">
+            <template is="dom-repeat" items="[[boards]]" as="board">
+               <board-selection-card board="[[board]]" on-select="_load" on-delete-action="_delete"></board-selection-card>
+            </template>
          </div>
       </div>
    </template>
@@ -74,9 +60,13 @@
          },
          _load(e) {
             this.debounce("anim", () => {
-               this.fire("load", e.model.board)
+               this.fire("load", e.detail)
             }, 300);
-
+         },
+         _delete(e) {
+            this.debounce("anim", () => {
+               this.fire("delete", e.detail)
+            }, 300);
          }
       });
    </script>

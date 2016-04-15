@@ -111,6 +111,9 @@
             this._electSave('boards/' + data.id, data);
             this.updateIndex(data);
          },
+         delete(data){
+            console.log("delete : ", data.id);
+         },
          _electSave(path, data) {
             if (this.fileStorage) {
                this.fileStorage.save(path, data, () => {

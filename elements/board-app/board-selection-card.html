@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-ripple/paper-ripple.html">
+
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="board-selection-card">
+
+   <template>
+      <style is="custom-style">
+         :host {
+            display: block;
+         }
+
+         .board-title {
+            font-family: "Roboto";
+            margin: 10px;
+            text-align: left;
+            text-transform: none;
+         }
+
+         paper-icon-button {
+            margin: 10px;
+            color: var(--paper-grey-200);
+         }
+
+         paper-icon-button:hover {
+            color: var(--paper-red-200);
+         }
+
+         #confirmOverlay {
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 100%;
+            height: 100%;
+            background: black;
+            opacity: 0;
+         }
+
+         #confirmOverlay.visible {
+            left: 0;
+            opacity: 0.5;
+            transition: opacity ease-in 0.3s;
+         }
+
+         #confirmOverlay.visible-anim {
+            opacity: 0;
+            transition: opacity ease-in 0.3s;
+         }
+
+         #deleteButton {
+            background: var(--paper-red-500);
+            color: var(--paper-grey-50);
+         }
+
+         #cancelButton{
+            background: var(--paper-grey-200);
+            color: var(--paper-grey-900);
+         }
+
+         #confirmContainer {
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity ease-in 0.3s;
+         }
+
+         #confirmContainer.visible {
+            left: 0;
+            opacity: 1;
+            transition: opacity ease-in 0.3s;
+         }
+      </style>
+
+
+      <!--Template goes here-->
+      <paper-material class="layout horizontal center relative">
+         <div class="flex" on-tap="_load">
+            <div class="board-title">[[board.title]]</div>
+            <paper-ripple></paper-ripple>
+         </div>
+         <paper-icon-button icon="delete" on-tap="_confirmDelete"></paper-icon-button>
+         <div id="confirmOverlay" on-tap="_closeConfirm">
+
+         </div>
+         <div id="confirmContainer" class="layout horizontal center center-justified">
+            <div style="pointer-events: all;">
+               <paper-button id="cancelButton" on-tap="_closeConfirm" raised>Cancel</paper-button>
+               <paper-button id="deleteButton" on-tap="_delete" raised>Delete</paper-button>
+            </div>
+         </div>
+      </paper-material>
+   </template>
+
+   <script>
+      "use strict";
+      Polymer({
+         is: "board-selection-card",
+         properties: {
+            board: {
+               type: Object,
+               value: {}
+            }
+         },
+         _load(e) {
+            this.fire("select", this.board);
+         },
+         _confirmDelete(e) {
+            this.$.confirmOverlay.classList.add("visible");
+            this.$.confirmContainer.classList.add("visible");
+
+         },
+         _closeConfirm(e) {
+            this.$.confirmOverlay.classList.add("visible-anim");
+            this.$.confirmContainer.classList.remove("visible");
+            this.debounce("anim", () => {
+               this.$.confirmOverlay.classList.remove("visible-anim");
+               this.$.confirmOverlay.classList.remove("visible");
+            }, 300);
+         },
+         _delete() {
+            this._closeConfirm();
+            this.fire("delete-action", this.board);
+         }
+
+      });
+   </script>
+
+</dom-module>
