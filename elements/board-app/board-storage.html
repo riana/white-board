@@ -15,6 +15,8 @@
       <iron-ajax id="loadIndex" url="/api/load" handle-as="json" on-response="_boardsIndexloaded" last-response="{{boardIndex}}" debounce-duration="300"></iron-ajax>
       <iron-ajax id="loadAjax" url="/api/load" handle-as="json" on-response="_loaded" last-response="{{loadedData}}" debounce-duration="300"></iron-ajax>
       <iron-ajax id="saveAjax" url="/api/save" method="POST" content-type="application/json" on-response="_saved" debounce-duration="300"></iron-ajax>
+      <iron-ajax id="deleteAjax" url="/api/delete" method="DELETE" content-type="application/json" on-response="_deleted" debounce-duration="300"></iron-ajax>
+
    </template>
 
    <script>
@@ -111,8 +113,20 @@
             this._electSave('boards/' + data.id, data);
             this.updateIndex(data);
          },
-         delete(data){
-            console.log("delete : ", data.id);
+         _deleted() {
+            console.log(" => deleted : ");
+         },
+         delete(data) {
+            let matchingBoards = this.boardIndex.filter(item => {
+               return item.id === data.id;
+            });
+            if (matchingBoards.length === 1) {
+               let oldBoardIndex = matchingBoards[0];
+               let index = this.boardIndex.indexOf(oldBoardIndex);
+               this.splice("boardIndex", index, 1);
+               this.saveBoardsIndex();
+               this._electDelete('boards/' + data.id);
+            }
          },
          _electSave(path, data) {
             if (this.fileStorage) {
@@ -128,6 +142,19 @@
                   console.log("onResponse");
                };
                this.$.saveAjax.generateRequest();
+            }
+         },
+         _electDelete(path) {
+            console.log("elect delete : ", path);
+            if (this.fileStorage) {
+               this.fileStorage.delete(path, () => {
+                  this._deleted();
+               });
+            } else {
+               this.$.deleteAjax.body = {
+                  id: path
+               };
+               this.$.deleteAjax.generateRequest();
             }
          }
 

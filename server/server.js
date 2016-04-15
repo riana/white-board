@@ -8,7 +8,7 @@ exports.enableDebug = function () {
 
 exports.start = function (staticDir, internalPort) {
 	var express = require('express');
-	var bodyParser = require('body-parser')
+	var bodyParser = require('body-parser');
 	var app = express();
 
 	// console.log('storage dir : ', storageDir);
@@ -20,7 +20,7 @@ exports.start = function (staticDir, internalPort) {
 		var id = req.query.id;
 		storage.load(id, (data) => {
 			res.end(data);
-		})
+		});
 	});
 
 	app.post('/api/save', function (req, res) {
@@ -31,6 +31,14 @@ exports.start = function (staticDir, internalPort) {
 		});
 		// console.log(req.query);
 
+	});
+
+	app.delete('/api/delete', function (req, res) {
+		var data = req.body;
+		var id = data.id;
+		storage.delete(id, (err) => {
+			res.end();
+		});
 	});
 
 	app.listen(internalPort, function () {
