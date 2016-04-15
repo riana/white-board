@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/iron-overlay-behavior/iron-overlay-behavior.html">
+
 <!--Imports go here-->
 
 <dom-module id="backdrop-view">
@@ -9,27 +9,73 @@
       <style is="custom-style">
          :host {
             display: block;
-            color: black;
-            background: white;
-            box-shadow: rgba(0, 0, 0, 0.24) -2.3408942051048403px 5.524510324047423px 12.090680100755666px 0px, rgba(0, 0, 0, 0.12) 0px 0px 12px 0px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+         }
+
+         #overlay {
+            background: black;
+            opacity: 0.5;
+            z-index: 100;
+            width: 100%;
+            height: 100%;
+            pointer-events: all;
+            visibility: hidden;
+         }
+
+         #overlay.visible {
+            visibility: visible;
+         }
+
+         #container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 101;
+            visibility: hidden;
+         }
+
+         #container.visible {
+            visibility: visible;
          }
       </style>
-
       <!--Template goes here-->
-      <content></content>
+      <div id="overlay" on-tap="_overlayTapped">
+      </div>
+      <div id="container" class="layout vertical center center-justified">
+         <div style="pointer-events: all;">
+            <content></content>
+         </div>
+      </div>
+      <!-- <content></content> -->
    </template>
 
    <script>
       "use strict";
       Polymer({
          is: "backdrop-view",
-         behaviors: [
-            Polymer.IronOverlayBehavior
-         ],
-         ready: function () {
-            this.withBackdrop = true;
-            // this.noCancelOnOutsideClick = true;
-            // this.noCancelOnEscKey = true;
+         properties: {
+
+         },
+         ready: function() {
+
+         },
+         open() {
+            this.$.overlay.classList.add("visible");
+            this.$.container.classList.add("visible");
+         },
+         close() {
+            this.$.overlay.classList.remove("visible");
+            this.$.container.classList.remove("visible");
+         },
+         _overlayTapped() {
+            this.close();
          }
       });
    </script>
