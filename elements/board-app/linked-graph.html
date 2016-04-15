@@ -59,6 +59,7 @@
 
 
       constructor(elSelector) {
+         this.state = LinkedGraphStates.IDLE;
          let width = 2048;
          let height = 2048;
          this.pencilFilter = false;
@@ -152,7 +153,9 @@
                d3.event.sourceEvent.stopPropagation();
             })
             .on('dragstart', function(d, i) {
-               self.state = LinkedGraphStates.DRAGGING_ITEM;
+               setTimeout(() => {
+                  self.state = LinkedGraphStates.DRAGGING_ITEM;
+               }, 300);
                d3.event.sourceEvent.stopPropagation();
             })
             .on('dragend', function(d, i) {
@@ -161,7 +164,10 @@
                   self.onDragItemEnd(coords,
                      d);
                }
-               self.state = LinkedGraphStates.IDLE;
+               setTimeout(() => {
+                  self.state = LinkedGraphStates.IDLE;
+               }, 300);
+
                // d3.event.stopPropagation();
                // console.log(d3.event);
                d3.event.sourceEvent.stopPropagation();
@@ -248,8 +254,7 @@
             .append("xhtml:body")
             .append("div")
             .on('click', function(d) {
-               if (self.onNodeClicked) {
-
+               if (self.onNodeClicked && self.state === LinkedGraphStates.IDLE) {
                   let screenPos = getScreenCoords(d.x, d.y, self.translate, self.scale);
                   self.onNodeClicked(d, screenPos);
                }
