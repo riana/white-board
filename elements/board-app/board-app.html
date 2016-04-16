@@ -13,12 +13,14 @@
 <link rel="import" href="./board-toolbar.html">
 <link rel="import" href="./board-surface.html">
 <link rel="import" href="./board-selector.html">
+<link rel="import" href="./UUID.html">
 
 <link rel="import" href="../fa-button/fa-button.html">
 <link rel="import" href="../backdrop-view/backdrop-view.html">
 
 <dom-module id="board-app">
    <template>
+      //TODO fix layout
       <style is="custom-style">
          :host {
             display: block;
@@ -150,7 +152,7 @@
          },
          _createBoard() {
             this.boardContent = {
-               id: this.generateUUID(),
+               id: UUID.generate(),
                title: "Untitled",
                nodes: [],
                links: []
@@ -204,15 +206,7 @@
          _insertImage() {
             console.log("_insertImage");
          },
-         generateUUID() {
-            function s4() {
-               return Math.floor((1 + Math.random()) * 0x10000)
-                  .toString(16)
-                  .substring(1);
-            };
-            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-               s4() + '-' + s4() + s4() + s4();
-         }
+
 
       });
    </script>
