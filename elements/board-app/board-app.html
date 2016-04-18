@@ -19,196 +19,198 @@
 <link rel="import" href="../backdrop-view/backdrop-view.html">
 
 <dom-module id="board-app">
-   <template>
-      //TODO fix layout
-      <style is="custom-style">
-         :host {
-            display: block;
-            @apply(--layout-vertical);
-         }
+    <template>
+        <!-- TODO fix layout -->
+        <style is="custom-style">
+            :host {
+                display: block;
+                @apply(--layout-vertical);
+            }
 
-         #controlBar {
-            background: var(--paper-grey-800);
-            padding-top: 10px;
-         }
+            #controlBar {
+                background: var(--paper-grey-800);
+                padding-top: 10px;
+            }
 
-         .add-button {
-            margin: 4px;
-            cursor: copy;
-         }
+            .add-button {
+                margin: 4px;
+                cursor: copy;
+            }
 
-         .add-button > * {
-            pointer-events: none;
-         }
+            .add-button > * {
+                pointer-events: none;
+            }
 
-         .controls-container {
-            margin-bottom: 20px;
-         }
+            .controls-container {
+                margin-bottom: 20px;
+            }
 
-         fa-button {
-            color: var(--paper-grey-100);
-         }
-      </style>
+            fa-button {
+                color: var(--paper-grey-100);
+            }
+        </style>
 
-      <board-storage id="storage" on-loaded="_loaded" board-index="{{boardsIndex}}"></board-storage>
+        <board-storage id="storage" on-loaded="_loaded" board-index="{{boardsIndex}}"></board-storage>
 
-      <board-toolbar title="{{boardContent.title}}" on-save="_save" on-open="_open" on-create="_createBoard"></board-toolbar>
-      <div class="layout horizontal flex">
-         <div id="controlBar" class="layout vertical center">
-            <div class="controls-container">
-               <fa-button icon="fa-mouse-pointer"></fa-button>
-               <fa-button icon="fa-image" on-tap="_insertImage"></fa-button>
+        <board-toolbar title="{{boardContent.title}}" on-save="_save" on-open="_open" on-create="_createBoard"></board-toolbar>
+        <div class="layout horizontal flex">
+            <div id="controlBar" class="layout vertical center">
+                <div class="controls-container">
+                    <fa-button icon="fa-mouse-pointer"></fa-button>
+                    <fa-button icon="fa-image" on-tap="_insertImage"></fa-button>
+                </div>
+
+                <fa-button icon="fa-font" draggable="true" on-track="_onDropText"></fa-button>
+                <template is="dom-repeat" items="[[stickStyles]]" as="stickStyle">
+                    <paper-material elevation="2" class="add-button" draggable="true" on-track="_onDropStick">
+                        <paper-icon-button icon="editor:short-text" style$="{{_getAddStickStyle(stickStyle)}}" no-ink></paper-icon-button>
+                    </paper-material>
+                </template>
             </div>
+            <board-surface id="board" class="flex" data="{{boardContent}}"></board-surface>
+        </div>
+        <backdrop-view id="loadDialog">
+            <board-selector boards="[[boardsIndex]]" on-load="_loadBoard" on-delete="_delete"></board-selector>
+        </backdrop-view>
+    </template>
 
-            <fa-button icon="fa-font" draggable="true" on-track="_onDropText"></fa-button>
-            <template is="dom-repeat" items="[[stickStyles]]" as="stickStyle">
-               <paper-material elevation="2" class="add-button" draggable="true" on-track="_onDropStick">
-                  <paper-icon-button icon="editor:short-text" style$="{{_getAddStickStyle(stickStyle)}}" no-ink></paper-icon-button>
-               </paper-material>
-            </template>
-         </div>
-         <board-surface id="board" class="flex" data="{{boardContent}}"></board-surface>
-      </div>
-      <backdrop-view id="loadDialog">
-         <board-selector boards="[[boardsIndex]]" on-load="_loadBoard" on-delete="_delete"></board-selector>
-      </backdrop-view>
-   </template>
-
-   <script>
-      "use strict";
-      Polymer({
-         is: "board-app",
-         properties: {
-            boardsIndex: {
-               type: Array,
-               value: []
+    <script>
+        "use strict";
+        Polymer({
+            is: "board-app",
+            properties: {
+                boardsIndex: {
+                    type: Array,
+                    value: []
+                },
+                boardContent: {
+                    type: Object,
+                    value: {
+                        title: "My Board",
+                        nodes: [],
+                        links: []
+                    }
+                },
+                stickStyles: {
+                    type: Array,
+                    value: [{
+                        name: "white",
+                        color: "#000000",
+                        background: "#FFFFFF"
+                    }, {
+                        name: "yellow",
+                        color: "#000000",
+                        background: "#FFEB3B"
+                    }, {
+                        name: "blue",
+                        color: "#FFFFFF",
+                        background: "#039BE5"
+                    }, {
+                        name: "green",
+                        color: "#FFFFFF",
+                        background: "#689F38"
+                    }, {
+                        name: "purple",
+                        color: "#FFFFFF",
+                        background: "#7E57C2"
+                    }, {
+                        name: "red",
+                        color: "#FFFFFF",
+                        background: "#F44336"
+                    }, {
+                        name: "orange",
+                        color: "#FFFFFF",
+                        background: "#EF6C00"
+                    }]
+                }
             },
-            boardContent: {
-               type: Object,
-               value: {
-                  title: "My Board",
-                  nodes: [],
-                  links: []
-               }
+            attached() {
+                // this.$.storage.load(selected);
+                this._createBoard();
             },
-            stickStyles: {
-               type: Array,
-               value: [{
-                  name: "white",
-                  color: "#000000",
-                  background: "#FFFFFF"
-               }, {
-                  name: "yellow",
-                  color: "#000000",
-                  background: "#FFEB3B"
-               }, {
-                  name: "blue",
-                  color: "#FFFFFF",
-                  background: "#039BE5"
-               }, {
-                  name: "green",
-                  color: "#FFFFFF",
-                  background: "#689F38"
-               }, {
-                  name: "purple",
-                  color: "#FFFFFF",
-                  background: "#7E57C2"
-               }, {
-                  name: "red",
-                  color: "#FFFFFF",
-                  background: "#F44336"
-               }, {
-                  name: "orange",
-                  color: "#FFFFFF",
-                  background: "#EF6C00"
-               }]
-            }
-         },
-         attached() {
-            // this.$.storage.load(selected);
-            this._createBoard();
-         },
-         _loaded(e) {
-            let data = e.detail;
-            if (data) {
-               this.boardContent = data;
-               console.log(this.boardContent);
-            }
-         },
-         _save() {
-            this.$.storage.save(this.boardContent);
-         },
-         _open() {
-            this.$.storage.loadBoardsIndex();
-            this.$.loadDialog.open();
-         },
-         _delete(e){
-            this.$.storage.delete(e.detail);
-         },
-         _loadBoard(e){
-            this.$.storage.updateIndex(e.detail);
-            this.$.storage.load(e.detail.id);
-            this.$.loadDialog.close();
-         },
-         _createBoard() {
-            this.boardContent = {
-               id: UUID.generate(),
-               title: "Untitled",
-               nodes: [],
-               links: []
-            };
-         },
-         _addNode(newNode, e) {
-            let pos = this.$.board.getPositionOnBoard(e.detail.x, e.detail.y);
+            _loaded(e) {
+                let data = e.detail;
+                if (data) {
+                    this.boardContent = data;
+                    console.log(this.boardContent);
+                }
+            },
+            _save() {
+                this.$.storage.save(this.boardContent);
+            },
+            _open() {
+                this.$.storage.loadBoardsIndex();
+                this.$.loadDialog.open();
+            },
+            _delete(e) {
+                this.$.storage.delete(e.detail);
+            },
+            _loadBoard(e) {
+                this.$.storage.updateIndex(e.detail);
+                this.$.storage.load(e.detail.id);
+                this.$.loadDialog.close();
+            },
+            _createBoard() {
+                this.boardContent = {
+                    id: UUID.generate(),
+                    title: "Untitled",
+                    nodes: [],
+                    links: []
+                };
+            },
+            _addNode(newNode, e) {
 
-            if (!this.id) {
-               this.id = 0;
-            }
-            this.id++;
-            let newId = this.id;
+               let defaultWidth = 80;
+               let defaultHeight = 80;
 
-            newNode.id = "" + newId;
-            newNode.text = "Put your text here";
-            newNode.x = pos.x;
-            newNode.y = pos.y;
-            newNode.width = 80;
-            newNode.height = 39;
+                let pos = this.$.board.getPositionOnBoard(e.detail.x, e.detail.y);
+
+                if (!this.id) {
+                    this.id = 0;
+                }
+                this.id++;
+                let newId = this.id;
+
+                newNode.id = "" + newId;
+                newNode.text = "Put your text here";
+                newNode.x = pos.x - (defaultWidth / 2);
+                newNode.y = pos.y - (defaultHeight / 2);
+                newNode.width = defaultHeight;
+                newNode.height = 39;
+
+                this.boardContent.nodes.push(newNode);
+                this.$.board._dataUpdated();
+
+                this.$.board.editNode(newNode, {
+                    x: e.detail.x - (defaultWidth / 2),
+                    y: e.detail.y - (defaultHeight / 2)
+                });
+            },
+            _onDropStick(e) {
+                if (e.detail.state === 'end') {
+                    let newNode = {
+                        style: e.model.stickStyle
+                    };
+                    this._addNode(newNode, e);
+                }
+            },
+            _onDropText(e) {
+                if (e.detail.state === 'end') {
+                    let newNode = {
+                        type: "text"
+                    };
+                    this._addNode(newNode, e);
+                }
+            },
+            _getAddStickStyle(stickStyle) {
+                return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
+            },
+            _insertImage() {
+                console.log("_insertImage");
+            },
 
 
-
-            this.boardContent.nodes.push(newNode);
-            this.$.board._dataUpdated();
-
-            this.$.board.editNode(newNode, {
-               x: e.detail.x,
-               y: e.detail.y
-            });
-         },
-         _onDropStick(e) {
-            if (e.detail.state === 'end') {
-               let newNode = {
-                  style: e.model.stickStyle
-               };
-               this._addNode(newNode, e);
-            }
-         },
-         _onDropText(e) {
-            if (e.detail.state === 'end') {
-               let newNode = {
-                  type: "text"
-               };
-               this._addNode(newNode, e);
-            }
-         },
-         _getAddStickStyle(stickStyle) {
-            return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
-         },
-         _insertImage() {
-            console.log("_insertImage");
-         },
-
-
-      });
-   </script>
+        });
+    </script>
 
 </dom-module>

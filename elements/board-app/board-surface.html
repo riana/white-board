@@ -247,15 +247,19 @@
             }, 300);
          },
          getPositionOnBoard(x, y){
-            return this.linkedGraph.getDiagramCoords(x,y);
+            let pos =  this.linkedGraph.getDiagramCoords(x,y);
+            return pos;
          },
          isOverTrash(pos) {
             let overTrash = false;
             if (pos && pos.x && pos.y) {
                let bounds = this.$.trash.getBoundingClientRect();
+               let boardBounds = this.$.d3Board.getBoundingClientRect();
+               let x = pos.x + boardBounds.left;
+               let y = pos.y + boardBounds.top;
                overTrash = true;
-               overTrash = overTrash && (pos.x > bounds.left && pos.x < (bounds.left + bounds.width));
-               overTrash = overTrash && (pos.y > bounds.top && pos.x < (bounds.top + bounds.height));
+               overTrash = overTrash && (x > bounds.left && x < (bounds.left + bounds.width));
+               overTrash = overTrash && (y > bounds.top && y < (bounds.top + bounds.height));
             }
             return overTrash;
          }
