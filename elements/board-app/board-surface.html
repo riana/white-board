@@ -145,6 +145,24 @@
                }
             };
 
+            this.linkedGraph.onViewportChanged = (viewTransforms) => {
+               let boardBounds = this.$.d3Board.getBoundingClientRect();
+               let viewport = {
+                  width: boardBounds.width / viewTransforms.scale,
+                  height: boardBounds.height / viewTransforms.scale,
+               };
+
+               if(!this.data.view) {
+                  this.data.view = {
+                     scale: viewTransforms.scale,
+                     translate: viewTransforms.translate
+                  }
+               }
+
+               this.data.view.scale= viewTransforms.scale,
+               this.data.view.translate= viewTransforms.translate
+            };
+
             this.linkedGraph.onDragItem = (pos, item) => {
                if (this.isOverTrash(pos)) {
                   this.$.trashIcon.classList.add("active");
@@ -174,14 +192,14 @@
             this.linkedGraph.onNodeClicked = (node, screenPos) => {
                this.editNode(node, screenPos);
             }
-            this.linkedGraph.updateGraph(this.data);
+            this.linkedGraph.setData(this.data);
          },
          _dataUpdated() {
             if (this.linkedGraph){
-               this.linkedGraph.updateGraph(this.data);
+               this.linkedGraph.setData(this.data);
             }else {
                this.debounce('data-updated', ()=> {
-                  this.linkedGraph.updateGraph(this.data);
+                  this.linkedGraph.setData(this.data);
                }, 1000);
             }
          },

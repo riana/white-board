@@ -3,334 +3,349 @@
 
 
 <style>
-   .node-html {
-      padding: 10px;
-      font-family: "Roboto";
-      font-size: 14px;
-      cursor: pointer;
-      box-sizing: border-box;
-      font-weight: lighter;
-   }
+    .node-html {
+        padding: 10px;
+        font-family: "Roboto";
+        font-size: 14px;
+        cursor: pointer;
+        box-sizing: border-box;
+        font-weight: lighter;
+    }
 
-   .node-sticky {
-      box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
-   }
+    .node-sticky {
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+    }
 
-   .node-text {
-      font-size: 16px;
-      font-weight: bold;
-   }
+    .node-text {
+        font-size: 16px;
+        font-weight: bold;
+    }
 </style>
 
 <script type="text/javascript" src="../../bower_components/d3/d3.js"></script>
 
 <script>
-   const LinkedGraphStates = {
-      IDLE: "IDLE",
-      DRAGGING_ITEM: "DRAGGING_ITEM"
+    const LinkedGraphStates = {
+        IDLE: "IDLE",
+        DRAGGING_ITEM: "DRAGGING_ITEM"
 
-   }
+    }
 
-   function getScreenCoords(x, y, translate, scale) {
-      var xn = translate[0] + x * scale;
-      var yn = translate[1] + y * scale;
-      return {
-         x: xn,
-         y: yn
-      };
-   }
+    function getScreenCoords(x, y, translate, scale) {
+        var xn = translate[0] + x * scale;
+        var yn = translate[1] + y * scale;
+        return {
+            x: xn,
+            y: yn
+        };
+    }
 
-   function getDiagramCoords(x, y, translate, scale) {
-      var xn = (x - translate[0]) / scale;
-      var yn = (y - translate[1]) / scale;
-      return {
-         x: xn,
-         y: yn
-      };
-   }
-
-
-   if (typeof require === "function") {
-      var d3 = require("d3");
-   }
-
-   class LinkedGraph {
+    function getDiagramCoords(x, y, translate, scale) {
+        var xn = (x - translate[0]) / scale;
+        var yn = (y - translate[1]) / scale;
+        return {
+            x: xn,
+            y: yn
+        };
+    }
 
 
+    if (typeof require === "function") {
+        var d3 = require("d3");
+    }
 
-      constructor(elSelector) {
-         this.state = LinkedGraphStates.IDLE;
-         let width = 2048;
-         let height = 2048;
-         this.pencilFilter = false;
-         var self = this;
-
-         self.scale = 1;
-         self.translate = [0, 0];
-
-         function zoomed() {
-            self.container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-            self.scale = d3.event.scale;
-            self.translate = d3.event.translate;
-         }
-
-         var zoom = d3.behavior.zoom()
-            .scaleExtent([0.1, 1.5])
-            .on("zoom", zoomed);
-
-         this.svg = d3.select(elSelector).append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .call(zoom)
-            .on("mousedown", function(e) {
-               this.touchStartDate = d3.event.timeStamp;
-            })
-            .on("mouseup", function(e) {
-               let dt = d3.event.timeStamp - this.touchStartDate;
+    class LinkedGraph {
 
 
-               var nodes = self.nodesLayer.selectAll(".node")[0];
-               let pickedNodes = nodes.filter(node => {
-                  let bbox = node.getBoundingClientRect();
-                  let x = d3.event.clientX;
-                  let y = d3.event.clientY;
 
-                  let bbx = bbox.left;
-                  let bby = bbox.top;
-                  let inside = x > bbx && x < (bbx + bbox.width);
-                  inside = inside && y > bby && y < (bby + bbox.height);
-                  return inside;
-               });
-               if (dt < 50 && pickedNodes.length === 0) {
-                  let coords = getDiagramCoords(d3.event.x, d3.event.y, self.translate, self.scale);
-                  console.log('click on board : ', d3.event, coords);
-                  self.onBoardClicked(d3.event, coords);
-               }
+        constructor(elSelector) {
+            this.state = LinkedGraphStates.IDLE;
+            let width = 2048;
+            let height = 2048;
+            this.pencilFilter = false;
+            var self = this;
 
-               // console.log("touch end on board : ", dt);
-            });
+            self.scale = 1;
+            self.translate = [0, 0];
 
-         var filter = this.svg.append("filter")
-            .attr("id", "filter")
-            // .attr("filterUnits", "userSpaceOnUse")
-            // .attr("x", -5)
-            // .attr("y", -5)
-            .attr("height", 2000)
-            .attr("width", 2000);
-
-         filter.append("feTurbulence")
-            .attr("baseFrequency", "0.2")
-            .attr("numOctaves", "5")
-            .attr("type", "fractalNoise");
-
-         filter.append("feDisplacementMap")
-            .attr("scale", "3")
-            .attr("xChannelSelector", "R")
-            .attr("in", "SourceGraphic");
-
-         this.container = this.svg.append("g");
-
-
-         this.linksLayer = this.container.append("g");
-         this.nodesLayer = this.container.append("g");
-
-
-         this.drag = d3.behavior.drag()
-            .on("drag", function(d, i) {
-               d.x += d3.event.dx;
-               d.y += d3.event.dy;
-               self.lastDrag = {
-                  x: d3.event.x,
-                  y: d3.event.y
-               }
-
-               self.updateGraph(self.data);
-               if (self.onDragItem) {
-                  let coords = getScreenCoords(d3.event.x, d3.event.y, self.translate, self.scale);
-                  self.onDragItem(coords,
-                     d);
-               }
-               d3.event.sourceEvent.stopPropagation();
-            })
-            .on('dragstart', function(d, i) {
-               setTimeout(() => {
-                  self.state = LinkedGraphStates.DRAGGING_ITEM;
-               }, 300);
-               d3.event.sourceEvent.stopPropagation();
-            })
-            .on('dragend', function(d, i) {
-               if (self.onDragItemEnd && self.lastDrag) {
-                  let coords = getScreenCoords(self.lastDrag.x, self.lastDrag.y, self.translate, self.scale);
-                  self.onDragItemEnd(coords,
-                     d);
-               }
-               setTimeout(() => {
-                  self.state = LinkedGraphStates.IDLE;
-               }, 300);
-
-               // d3.event.stopPropagation();
-               // console.log(d3.event);
-               d3.event.sourceEvent.stopPropagation();
-
-            });
-         this.data = {}
-      }
-
-      getDiagramCoords(x, y) {
-         return getDiagramCoords(x, y, this.translate, this.scale);
-      }
-
-      updateEdges(data) {
-         var link = this.linksLayer.selectAll("path")
-            .data(data.links);
-         link
-            .enter().append("path")
-            .attr("class", "link")
-            .attr("stroke", "#000000")
-            .attr("stroke-width", 2)
-            .attr("fill", "none")
-            .attr("style", () => {
-               return this.pencilFilter ? "filter:url(#filter)" : "";
-            });
-
-
-         link.attr("d", function(d) {
-            var target = data.nodes.filter((n) => {
-               return n.id === d.target;
-            })[0];
-            var source = data.nodes.filter((n) => {
-               return n.id === d.source;
-            })[0];
-            var dx = target.x - source.x,
-               dy = target.y - source.y,
-               dr = Math.sqrt(dx * dx + dy * dy);
-            // Curved line
-            // return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
-            function rotate(cx, cy, x, y, angle) {
-               var radians = (Math.PI / 180) * angle,
-                  cos = Math.cos(radians),
-                  sin = Math.sin(radians),
-                  nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
-                  ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
-               return [nx, ny];
+            function zoomed() {
+                self.container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+                self.scale = d3.event.scale;
+                self.translate = d3.event.translate;
+                if (self.onViewportChanged) {
+                    self.onViewportChanged({
+                        scale: self.scale,
+                        translate: self.translate
+                    });
+                }
             }
-            var p2 = rotate(0, 0, dx, dy, 90);
-            var scale = dr / 4;
-            scale = scale * Math.sign(dy) / dr;
-            if (dx < 0) {
 
-            }
-            return "M" + source.x + ',' + source.y + 'S' + (source.x + dx / 2 + p2[0] * scale) + "," + (source.y + dy / 2 + p2[1] * scale) + ',' + target.x + "," + target.y;
+            this.zoom = d3.behavior.zoom()
+                .scaleExtent([0.1, 1.5])
+                .on("zoom", zoomed);
 
-            // Straigth line
-            // return "M" + source.x + ',' + source.y + 'L' + target.x + "," + target.y;
-         });
+            this.svg = d3.select(elSelector).append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .call(this.zoom)
+                .on("mousedown", function(e) {
+                    this.touchStartDate = d3.event.timeStamp;
+                })
+                .on("mouseup", function(e) {
+                    let dt = d3.event.timeStamp - this.touchStartDate;
 
-         link.exit().remove();
-      }
 
-      updateNodes(data) {
-         let self = this;
-         var node = this.nodesLayer.selectAll(".node")
-            .data(data.nodes);
+                    var nodes = self.nodesLayer.selectAll(".node")[0];
+                    let pickedNodes = nodes.filter(node => {
+                        let bbox = node.getBoundingClientRect();
+                        let x = d3.event.clientX;
+                        let y = d3.event.clientY;
 
-         var nodeGroup = node.enter().append("g")
-            .call(this.drag)
-            .attr("class", "node").attr("style", () => {
-               return this.pencilFilter ? "filter:url(#filter)" : "";
+                        let bbx = bbox.left;
+                        let bby = bbox.top;
+                        let inside = x > bbx && x < (bbx + bbox.width);
+                        inside = inside && y > bby && y < (bby + bbox.height);
+                        return inside;
+                    });
+                    if (dt < 50 && pickedNodes.length === 0) {
+                        let coords = getDiagramCoords(d3.event.x, d3.event.y, self.translate, self.scale);
+                        console.log('click on board : ', d3.event, coords);
+                        self.onBoardClicked(d3.event, coords);
+                    }
+
+                    // console.log("touch end on board : ", dt);
+                });
+
+            var filter = this.svg.append("filter")
+                .attr("id", "filter")
+                // .attr("filterUnits", "userSpaceOnUse")
+                // .attr("x", -5)
+                // .attr("y", -5)
+                .attr("height", 2000)
+                .attr("width", 2000);
+
+            filter.append("feTurbulence")
+                .attr("baseFrequency", "0.2")
+                .attr("numOctaves", "5")
+                .attr("type", "fractalNoise");
+
+            filter.append("feDisplacementMap")
+                .attr("scale", "3")
+                .attr("xChannelSelector", "R")
+                .attr("in", "SourceGraphic");
+
+            this.container = this.svg.append("g");
+
+
+            this.linksLayer = this.container.append("g");
+            this.nodesLayer = this.container.append("g");
+
+
+            this.drag = d3.behavior.drag()
+                .on("drag", function(d, i) {
+                    d.x += d3.event.dx;
+                    d.y += d3.event.dy;
+                    self.lastDrag = {
+                        x: d3.event.x,
+                        y: d3.event.y
+                    }
+
+                    self.updateGraph(self.data);
+                    if (self.onDragItem) {
+                        let coords = getScreenCoords(d3.event.x, d3.event.y, self.translate, self.scale);
+                        self.onDragItem(coords,
+                            d);
+                    }
+                    d3.event.sourceEvent.stopPropagation();
+                })
+                .on('dragstart', function(d, i) {
+                    setTimeout(() => {
+                        self.state = LinkedGraphStates.DRAGGING_ITEM;
+                    }, 300);
+                    d3.event.sourceEvent.stopPropagation();
+                })
+                .on('dragend', function(d, i) {
+                    if (self.onDragItemEnd && self.lastDrag) {
+                        let coords = getScreenCoords(self.lastDrag.x, self.lastDrag.y, self.translate, self.scale);
+                        self.onDragItemEnd(coords,
+                            d);
+                    }
+                    setTimeout(() => {
+                        self.state = LinkedGraphStates.IDLE;
+                    }, 300);
+
+                    // d3.event.stopPropagation();
+                    // console.log(d3.event);
+                    d3.event.sourceEvent.stopPropagation();
+
+                });
+            this.data = {}
+        }
+
+        getDiagramCoords(x, y) {
+            return getDiagramCoords(x, y, this.translate, this.scale);
+        }
+
+        updateEdges(data) {
+            var link = this.linksLayer.selectAll("path")
+                .data(data.links);
+            link
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("stroke", "#000000")
+                .attr("stroke-width", 2)
+                .attr("fill", "none")
+                .attr("style", () => {
+                    return this.pencilFilter ? "filter:url(#filter)" : "";
+                });
+
+
+            link.attr("d", function(d) {
+                var target = data.nodes.filter((n) => {
+                    return n.id === d.target;
+                })[0];
+                var source = data.nodes.filter((n) => {
+                    return n.id === d.source;
+                })[0];
+                var dx = target.x - source.x,
+                    dy = target.y - source.y,
+                    dr = Math.sqrt(dx * dx + dy * dy);
+                // Curved line
+                // return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
+                function rotate(cx, cy, x, y, angle) {
+                    var radians = (Math.PI / 180) * angle,
+                        cos = Math.cos(radians),
+                        sin = Math.sin(radians),
+                        nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+                        ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+                    return [nx, ny];
+                }
+                var p2 = rotate(0, 0, dx, dy, 90);
+                var scale = dr / 4;
+                scale = scale * Math.sign(dy) / dr;
+                if (dx < 0) {
+
+                }
+                return "M" + source.x + ',' + source.y + 'S' + (source.x + dx / 2 + p2[0] * scale) + "," + (source.y + dy / 2 + p2[1] * scale) + ',' + target.x + "," + target.y;
+
+                // Straigth line
+                // return "M" + source.x + ',' + source.y + 'L' + target.x + "," + target.y;
             });
 
-         node.attr("transform", function(d) {
-            return 'translate(' + [d.x, d.y] + ')';
-         });
+            link.exit().remove();
+        }
 
-         node.exit().remove();
+        updateNodes(data) {
+            let self = this;
+            var node = this.nodesLayer.selectAll(".node")
+                .data(data.nodes);
 
-         nodeGroup.append("foreignObject")
+            var nodeGroup = node.enter().append("g")
+                .call(this.drag)
+                .attr("class", "node").attr("style", () => {
+                    return this.pencilFilter ? "filter:url(#filter)" : "";
+                });
 
-         .attr("class", "node-fo")
-            // .attr("width", 100)
-            // .attr("height", 30)
-            .append("xhtml:body")
-            .append("div")
-            .on('click', function(d) {
-               if (self.onNodeClicked && self.state === LinkedGraphStates.IDLE) {
-                  let screenPos = getScreenCoords(d.x, d.y, self.translate, self.scale);
-                  self.onNodeClicked(d, screenPos);
-               }
-               d3.event.preventDefault();
-               d3.event.stopPropagation();
-            })
-            .attr("class", function(d) {
-               // let container = d3.select(this);
-               // console.log(d, container);
-               let style = "node-sticky";
-               if (d.type === "text") {
-                  style = "node-text";
-               }
-               return `node-html ${style}`;
-            })
-            .append("div")
+            node.attr("transform", function(d) {
+                return 'translate(' + [d.x, d.y] + ')';
+            });
 
-         .html(function(d) {
-            return d.text;
-         });
+            node.exit().remove();
 
-         node.select(".node-fo").each(function(d) {
+            nodeGroup.append("foreignObject")
 
-            let container = d3.select(this);
-            let content = d3.select(this).select(".node-html").each(function(d) {
-               let bounds = this.getBoundingClientRect();
-               let width = d.width ? d.width : 100;
-               let height = d.height ? d.height : 100;
+            .attr("class", "node-fo")
+                // .attr("width", 100)
+                // .attr("height", 30)
+                .append("xhtml:body")
+                .append("div")
+                .on('click', function(d) {
+                    if (self.onNodeClicked && self.state === LinkedGraphStates.IDLE) {
+                        let screenPos = getScreenCoords(d.x, d.y, self.translate, self.scale);
+                        self.onNodeClicked(d, screenPos);
+                    }
+                    d3.event.preventDefault();
+                    d3.event.stopPropagation();
+                })
+                .attr("class", function(d) {
+                    // let container = d3.select(this);
+                    // console.log(d, container);
+                    let style = "node-sticky";
+                    if (d.type === "text") {
+                        style = "node-text";
+                    }
+                    return `node-html ${style}`;
+                })
+                .append("div")
 
-               container
-                  .attr("width", width)
-                  .attr("height", height)
-                  .attr("transform", function(d) {
-                     let bbox = this.getBBox()
-                     return "translate(" + [-width / 2, -height / 2] + ")"
-                  });
+            .html(function(d) {
+                return d.text;
+            });
+
+            node.select(".node-fo").each(function(d) {
+
+                let container = d3.select(this);
+                let content = d3.select(this).select(".node-html").each(function(d) {
+                    let bounds = this.getBoundingClientRect();
+                    let width = d.width ? d.width : 100;
+                    let height = d.height ? d.height : 100;
+
+                    container
+                        .attr("width", width)
+                        .attr("height", height)
+                        .attr("transform", function(d) {
+                            let bbox = this.getBBox()
+                            return "translate(" + [-width / 2, -height / 2] + ")"
+                        });
+
+                });
 
             });
 
-         });
+            function insertLinebreaks(d) {
+                var el = d3.select(this);
+                // var lineHeight = el[0][0].clientHeight;
+                var words = d.text.split('\n');
 
-         function insertLinebreaks(d) {
-            var el = d3.select(this);
-            // var lineHeight = el[0][0].clientHeight;
-            var words = d.text.split('\n');
+                el.text('');
 
-            el.text('');
+                for (var i = 0; i < words.length; i++) {
+                    var tspan = el.append('br').text(words[i]);
+                    // if (i > 0)
+                    //    tspan.attr('x', 0).attr('dy', lineHeight);
+                }
+            };
 
-            for (var i = 0; i < words.length; i++) {
-               var tspan = el.append('br').text(words[i]);
-               // if (i > 0)
-               //    tspan.attr('x', 0).attr('dy', lineHeight);
+
+            node.select(".node-html").html(function(d) {
+                var html = d.text.split("\n");
+                return html.join("<br>");
+            }).attr("updateStyle", function(d) {
+                // insertLinebreaks(d);
+                // this.classList.add("green-card");
+                this.style.color = d.style ? d.style.color : "#000000";
+                this.style.background = d.style ? d.style.background : "none";
+                // this.style.width = '300px';
+                // this.style.height = '70px';
+            });
+        }
+
+        setData(data) {
+            if (data.view) {
+                if (!isNaN(data.view.scale) && !isNaN(data.view.translate[0]) && !isNaN(data.view.translate[1])) {
+                    this.zoom.translate(data.view.translate);
+                    this.zoom.scale(data.view.scale);
+                    this.container.attr("transform", "translate(" + data.view.translate + ")scale(" + data.view.scale + ")");
+                }
             }
-         };
+            this.updateGraph(data);
+        }
+        updateGraph(data) {
+            let self = this;
+            this.data = data;
+            this.updateEdges(data);
+            this.updateNodes(data);
+        }
 
-
-         node.select(".node-html").html(function(d) {
-            var html = d.text.split("\n");
-            return html.join("<br>");
-         }).attr("updateStyle", function(d) {
-            // insertLinebreaks(d);
-            // this.classList.add("green-card");
-            this.style.color = d.style ? d.style.color : "#000000";
-            this.style.background = d.style ? d.style.background : "none";
-            // this.style.width = '300px';
-            // this.style.height = '70px';
-         });
-      }
-
-      updateGraph(data) {
-         let self = this;
-         this.data = data;
-         // console.log("updating :", data.nodes);
-         this.updateEdges(data);
-         this.updateNodes(data);
-      }
-
-   }
+    }
 </script>
