@@ -6,7 +6,7 @@ exports.enableDebug = function () {
 	storage.enableDebug();
 };
 
-exports.start = function (staticDir, internalPort) {
+exports.start = function (staticDir, internalPort, cb) {
 	var express = require('express');
 	var bodyParser = require('body-parser');
 	var app = express();
@@ -43,5 +43,8 @@ exports.start = function (staticDir, internalPort) {
 
 	app.listen(internalPort, function () {
 		console.log('Internal server running @' + internalPort);
+		if(cb){
+			cb();
+		}
 	});
 };
