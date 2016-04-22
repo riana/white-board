@@ -89,7 +89,8 @@ gulp.task('vulcanize', function () {
 				appDir + '/bower_components/crossroads/dev/lib/signals.js',
 				appDir + '/bower_components/hasher/dist/js/hasher.js',
 				appDir + '/bower_components/crossroads/dist/crossroads.js',
-				appDir + '/bower_components/font-awesome/font-awesome.css'
+				appDir + '/bower_components/font-awesome/font-awesome.css',
+				appDir + '/bower_components/highlightjs/highlight.pack.js'
 			],
 			// stripExcludes: false,
 			stripComments: true
@@ -146,7 +147,7 @@ gulp.task('copy', function () {
 
 gulp.task('copy-libs', function () {
 	return gulp.src([
-		appDir + '/bower_components/{webcomponentsjs,platinum-sw,sw-toolbox,promise-polyfill,crossroads,hasher,font-awesome}/**/*'
+		appDir + '/bower_components/{webcomponentsjs,platinum-sw,sw-toolbox,promise-polyfill,crossroads,hasher,font-awesome,highlightjs}/**/*'
 	]).pipe(gulp.dest(distDir + '/bower_components'));
 });
 
