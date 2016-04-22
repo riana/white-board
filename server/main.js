@@ -8,6 +8,7 @@ const electron = require('electron');
 const app = electron.app;
 console.log(app.getAppPath());
 
+let appName = "Whiteboard"
 const internalPort = 32101;
 const server = require('./server');
 server.start(app.getAppPath(), internalPort);
@@ -22,7 +23,7 @@ let mainWindow;
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 1280, height: 800});
+  mainWindow = new BrowserWindow({width: 1280, height: 800,title: appName});
 
   // and load the index.html of the app.
   // mainWindow.loadURL("http://127.0.0.1:" +internalPort + "/");
