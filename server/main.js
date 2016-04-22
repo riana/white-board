@@ -10,10 +10,6 @@ const app = electron.app;
 console.log(app.getAppPath());
 
 let appName = "Whiteboard"
-const internalPort = 32101;
-const server = require('./server');
-server.start(app.getAppPath(), internalPort);
-
 
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow;
