@@ -16,13 +16,18 @@
         box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
     }
 
-    .node-text {
-        font-size: 16px;
-        font-weight: bold;
-    }
+    .node-text {}
 </style>
 
 <script type="text/javascript" src="../../bower_components/d3/d3.js"></script>
+<script type="text/javascript" src="../../bower_components/marked/marked.min.js"></script>
+
+<link rel="stylesheet" title="Default" href="../../bower_components/highlightjs/styles/default.css">
+<!-- <link rel="stylesheet" title="Default" href="../../bower_components/highlightjs/styles/dracula.css"> -->
+<script type="text/javascript" src="../../bower_components/highlightjs/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
 
 <script>
     const LinkedGraphStates = {
@@ -289,10 +294,9 @@
                     let bounds = this.getBoundingClientRect();
                     let width = d.width ? d.width : 100;
                     let height = d.height ? d.height : 100;
-
                     container
-                        .attr("width", width)
-                        .attr("height", height)
+                        .attr("width", '' + width + 'px')
+                        .attr("height", '' + height + 'px')
                         .attr("transform", function(d) {
                             let bbox = this.getBBox()
                             return "translate(" + [-width / 2, -height / 2] + ")"
@@ -318,8 +322,18 @@
 
 
             node.select(".node-html").html(function(d) {
-                var html = d.text.split("\n");
-                return html.join("<br>");
+                //  var html = d.text.split("\n");
+                //  return html.join("<br>");
+                marked.setOptions({
+                    highlight: function(code) {
+                        return hljs.highlightAuto(code).value;
+                    }
+                });
+
+                return marked(d.text, {
+                    breaks: true,
+                    sanitize: true
+                });
             }).attr("updateStyle", function(d) {
                 // insertLinebreaks(d);
                 // this.classList.add("green-card");
@@ -331,13 +345,8 @@
         }
 
         setData(data) {
-            if (data.view) {
-                if (!isNaN(data.view.scale) && !isNaN(data.view.translate[0]) && !isNaN(data.view.translate[1])) {
-                    this.zoom.translate(data.view.translate);
-                    this.zoom.scale(data.view.scale);
-                    this.container.attr("transform", "translate(" + data.view.translate + ")scale(" + data.view.scale + ")");
-                }
-            }
+
+            this.applyZoom(data);
             this.updateGraph(data);
         }
         updateGraph(data) {
@@ -345,6 +354,18 @@
             this.data = data;
             this.updateEdges(data);
             this.updateNodes(data);
+        }
+
+        applyZoom(data){
+           if (data.view) {
+               if (!isNaN(data.view.scale) && !isNaN(data.view.translate[0]) && !isNaN(data.view.translate[1])) {
+                  this.scale = data.view.scale;
+                  this.translate = data.view.translate;
+                   this.zoom.translate(data.view.translate);
+                   this.zoom.scale(data.view.scale);
+                   this.container.attr("transform", "translate(" + data.view.translate + ")scale(" + data.view.scale + ")");
+               }
+           }
         }
 
     }

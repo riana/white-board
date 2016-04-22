@@ -61,8 +61,6 @@ gulp.task('install', ['default'], function (cb) {
 	  .pipe(install({production: true}));
 })
 
-
-
 gulp.task('default', ['clean'], function (cb) {
 	runSequence(
 		'vulcanize',

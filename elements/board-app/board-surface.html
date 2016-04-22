@@ -11,277 +11,298 @@
 
 <link rel="import" href="./linked-graph.html">
 
+<script type="text/javascript" src="../../bower_components/marked/marked.min.js"></script>
 
 <dom-module id="board-surface">
 
-   <template>
-      <style is="custom-style">
-         :host {
-            display: block;
-            position: relative;
-         }
-
-         #d3Board {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            overflow: hidden;
-         }
-
-         #trash {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 0;
-         }
-
-         #trashIcon {
-            margin: 20px;
-            width: 40px;
-            height: 40px;
-            color: var(--paper-grey-300);
-            transition: all ease-in 0.2s;
-         }
-
-         #trashIcon.active {
-            color: var(--paper-red-400);
-            width: 48px;
-            height: 48px;
-            transition: all ease-in 0.2s;
-         }
-
-         #stickEditor {
-            position: absolute;
-            visibility: hidden;
-            background: blue;
-
-         }
-
-         #stickEditor.visible {
-            visibility: visible;
-         }
-
-
-
-         #editorContent {
-            min-width: 100px;
-         }
-
-
-
-         .editor-content {
-            margin: 10px;
-         }
-
-         #stickTextEditor {
-            --paper-input-container-input: {
-               font-size: 16px;
-               color: white;
+    <template>
+        <style is="custom-style">
+            :host {
+                display: block;
+                position: relative;
             }
-         }
 
-         .sticky {
-            max-width: 250px;
-         }
-
-         .sticky > #editorContent > #stickTextEditor {
-            --paper-input-container-input: {
-               font-size: 18px;
-               color: var(--paper-grey-900);
+            #d3Board {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                overflow: hidden;
             }
-         }
-      </style>
 
-      <div id="d3Board">
-         <div id="trash">
-            <iron-icon id="trashIcon" icon="delete"></iron-icon>
-         </div>
+            #trash {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                pointer-events: none;
+                z-index: 0;
+            }
 
-         <paper-material id="stickEditor" class$="{{_editorStyle(selectedNode)}}">
-            <div id="editorContent" class="editor-content">
-               <paper-textarea id="stickTextEditor" label="Text textarea" value="{{selectedNode.text}}" no-label-float></paper-textarea>
+            #trashIcon {
+                margin: 20px;
+                width: 40px;
+                height: 40px;
+                color: var(--paper-grey-300);
+                transition: all ease-in 0.2s;
+            }
+
+            #trashIcon.active {
+                color: var(--paper-red-400);
+                width: 48px;
+                height: 48px;
+                transition: all ease-in 0.2s;
+            }
+
+            #stickEditor {
+                position: absolute;
+                visibility: hidden;
+                background: blue;
+            }
+
+            #stickEditor.visible {
+                visibility: visible;
+            }
+
+            #editorContent {
+                min-width: 100px;
+            }
+
+            .editor-content {
+                margin: 10px;
+            }
+
+            #stickTextEditor {
+                --paper-input-container-input: {
+                    font-size: 16px;
+                    color: white;
+                }
+            }
+
+            .sticky {
+                max-width: 250px;
+            }
+
+            .sticky > #editorContent > #stickTextEditor {
+                --paper-input-container-input: {
+                    font-size: 12px;
+                    color: var(--paper-grey-900);
+                }
+            }
+
+            #measure {
+                visibility: hidden;
+                position: absolute;
+                padding: 10px;
+                font-family: "Roboto";
+                font-size: 14px;
+                cursor: pointer;
+                box-sizing: border-box;
+                font-weight: lighter;
+            }
+        </style>
+
+        <div id="d3Board">
+            <div id="trash">
+                <iron-icon id="trashIcon" icon="delete"></iron-icon>
             </div>
-         </paper-material>
 
-      </div>
-   </template>
+            <paper-material id="stickEditor" class$="{{_editorStyle(selectedNode)}}">
+                <div id="editorContent" class="editor-content">
+                    <paper-textarea id="stickTextEditor" label="Text textarea" value="{{selectedNode.text}}" no-label-float></paper-textarea>
+                </div>
+            </paper-material>
 
-   <script>
-      "use strict";
-      Polymer({
-         is: "board-surface",
-         behaviors: [
-            Polymer.NeonAnimationRunnerBehavior
-         ],
-         properties: {
-            animationConfig: {
-               value: {}
+            <div id="measure">
+            </div>
+        </div>
+    </template>
+
+    <script>
+        "use strict";
+        Polymer({
+            is: "board-surface",
+            behaviors: [
+                Polymer.NeonAnimationRunnerBehavior
+            ],
+            properties: {
+                animationConfig: {
+                    value: {}
+                },
+                selectedNode: {
+                    type: Object,
+                    value: {}
+                },
+                data: {
+                    type: Object,
+                    value: {
+                        nodes: [],
+                        links: []
+                    },
+                    notify: true,
+                    observer: '_dataUpdated'
+                }
             },
-            selectedNode: {
-               type: Object,
-               value: {}
+            attached() {
+                this.linkedGraph = new LinkedGraph("#d3Board");
+                this.linkedGraph.pencilFilter = false;
+
+                this.linkedGraph.onBoardClicked = (e, pos) => {
+                    if (this.editing) {
+                        this.stopEditNode();
+                        this.linkedGraph.updateGraph(this.data);
+                    }
+                };
+
+                this.linkedGraph.onViewportChanged = (viewTransforms) => {
+                    let boardBounds = this.$.d3Board.getBoundingClientRect();
+                    let viewport = {
+                        width: boardBounds.width / viewTransforms.scale,
+                        height: boardBounds.height / viewTransforms.scale,
+                    };
+
+                    if (!this.data.view) {
+                        this.data.view = {
+                            scale: viewTransforms.scale,
+                            translate: viewTransforms.translate
+                        }
+                    }
+
+                    this.data.view.scale = viewTransforms.scale,
+                        this.data.view.translate = viewTransforms.translate
+                };
+
+                this.linkedGraph.onDragItem = (pos, item) => {
+                    if (this.isOverTrash(pos)) {
+                        this.$.trashIcon.classList.add("active");
+                    } else {
+                        this.$.trashIcon.classList.remove("active");
+                    }
+                };
+
+                this.linkedGraph.onDragItemEnd = (pos, item) => {
+                    if (this.isOverTrash(pos)) {
+                        let index = this.data.nodes.indexOf(item);
+                        this.data.nodes.splice(index, 1);
+
+                        let links = this.data.links.filter((link) => {
+                            return link.source === item.id || link.target === item.id;
+                        });
+
+                        links.forEach((link) => {
+                            let index = this.data.links.indexOf(link);
+                            this.data.links.splice(index, 1);
+                        });
+                        this.linkedGraph.updateGraph(this.data);
+                    }
+                    this.$.trashIcon.classList.remove("active");
+                };
+
+                this.linkedGraph.onNodeClicked = (node, screenPos) => {
+                    this.editNode(node, screenPos);
+                }
+                this.linkedGraph.setData(this.data);
             },
-            data: {
-               type: Object,
-               value: {
-                  nodes: [],
-                  links: []
-               },
-               notify: true,
-               observer: '_dataUpdated'
+            _dataUpdated() {
+                if (this.linkedGraph) {
+                    this.linkedGraph.setData(this.data);
+                } else {
+                    this.debounce('data-updated', () => {
+                        this.linkedGraph.setData(this.data);
+                    }, 1000);
+                }
+            },
+            _editorStyle(selectedNode) {
+                return selectedNode.type ? selectedNode.type : 'sticky';
+            },
+            editNode(node, screenPos) {
+                this.editing = true;
+                this.selectedNode = node;
+                this.$.stickEditor.classList.add("visible");
+
+                this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = node.style ? node.style.color : "#000000";
+                // this.$.stickTextEditor.getElementsByTagName("textarea")[0].style['font-size'] = '32px';
+                this.$.stickEditor.style.background = node.style ? node.style.background : "white";
+
+                let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
+                let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+                this.animationConfig['startEditCard'] = {
+                    name: 'transform-animation',
+                    node: this.$.stickEditor,
+                    transformOrigin: '50% 50%',
+                    transformFrom: 'scale(' + scaleX + ',' + scaleY + ')',
+                    transformTo: 'scale(1)',
+                    timing: {
+                        duration: 300
+                    }
+                };
+                this.playAnimation('startEditCard');
+
+                let x = screenPos.x - this.$.stickEditor.clientWidth / 2;
+                let y = screenPos.y - this.$.stickEditor.clientHeight / 2;
+                this.$.stickEditor.style.top = '' + y + 'px';
+                this.$.stickEditor.style.left = '' + x + 'px';
+            },
+            stopEditNode() {
+                this.selectedNode.width = this.$.editorContent.clientWidth + 10;
+                this.selectedNode.height = this.$.editorContent.clientHeight + 10;
+
+                this.$.measure.innerHTML = marked(this.selectedNode.text, {
+                    breaks: true,
+                    sanitize: true
+                });
+
+                let rect = this.$.measure.getBoundingClientRect();
+                this.selectedNode.width = rect.width + 20;
+                this.selectedNode.height = rect.height + 20;
+                this.linkedGraph.updateGraph(this.data);
+
+
+
+
+                let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
+                let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+                this.animationConfig['startEditCard'] = [{
+                    name: 'transform-animation',
+                    node: this.$.stickEditor,
+                    transformOrigin: '50% 50%',
+                    transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
+                    transformFrom: 'scale(1)',
+                    timing: {
+                        duration: 300
+                    }
+                }, {
+                    name: 'fade-out-animation',
+                    node: this.$.stickEditor,
+                    timing: {
+                        delay: 150,
+                        duration: 200
+                    }
+                }];
+                this.playAnimation('startEditCard');
+                this.debounce("stop", () => {
+                    this.editing = false;
+                    this.$.stickEditor.classList.remove("visible");
+                }, 300);
+            },
+            getPositionOnBoard(x, y) {
+                let pos = this.linkedGraph.getDiagramCoords(x, y);
+                return pos;
+            },
+            isOverTrash(pos) {
+                let overTrash = false;
+                if (pos && pos.x && pos.y) {
+                    let bounds = this.$.trash.getBoundingClientRect();
+                    let boardBounds = this.$.d3Board.getBoundingClientRect();
+                    let x = pos.x + boardBounds.left;
+                    let y = pos.y + boardBounds.top;
+                    overTrash = true;
+                    overTrash = overTrash && (x > bounds.left && x < (bounds.left + bounds.width));
+                    overTrash = overTrash && (y > bounds.top && y < (bounds.top + bounds.height));
+                }
+                return overTrash;
             }
-         },
-         attached() {
-            this.linkedGraph = new LinkedGraph("#d3Board");
-            this.linkedGraph.pencilFilter = false;
-
-            this.linkedGraph.onBoardClicked = (e, pos) => {
-               if (this.editing) {
-                  this.stopEditNode();
-                  this.linkedGraph.updateGraph(this.data);
-               }
-            };
-
-            this.linkedGraph.onViewportChanged = (viewTransforms) => {
-               let boardBounds = this.$.d3Board.getBoundingClientRect();
-               let viewport = {
-                  width: boardBounds.width / viewTransforms.scale,
-                  height: boardBounds.height / viewTransforms.scale,
-               };
-
-               if(!this.data.view) {
-                  this.data.view = {
-                     scale: viewTransforms.scale,
-                     translate: viewTransforms.translate
-                  }
-               }
-
-               this.data.view.scale= viewTransforms.scale,
-               this.data.view.translate= viewTransforms.translate
-            };
-
-            this.linkedGraph.onDragItem = (pos, item) => {
-               if (this.isOverTrash(pos)) {
-                  this.$.trashIcon.classList.add("active");
-               } else {
-                  this.$.trashIcon.classList.remove("active");
-               }
-            };
-
-            this.linkedGraph.onDragItemEnd = (pos, item) => {
-               if (this.isOverTrash(pos)) {
-                  let index = this.data.nodes.indexOf(item);
-                  this.data.nodes.splice(index, 1);
-
-                  let links = this.data.links.filter((link) => {
-                     return link.source === item.id || link.target === item.id;
-                  });
-
-                  links.forEach((link) => {
-                     let index = this.data.links.indexOf(link);
-                     this.data.links.splice(index, 1);
-                  });
-                  this.linkedGraph.updateGraph(this.data);
-               }
-               this.$.trashIcon.classList.remove("active");
-            };
-
-            this.linkedGraph.onNodeClicked = (node, screenPos) => {
-               this.editNode(node, screenPos);
-            }
-            this.linkedGraph.setData(this.data);
-         },
-         _dataUpdated() {
-            if (this.linkedGraph){
-               this.linkedGraph.setData(this.data);
-            }else {
-               this.debounce('data-updated', ()=> {
-                  this.linkedGraph.setData(this.data);
-               }, 1000);
-            }
-         },
-         _editorStyle(selectedNode){
-            return selectedNode.type ? selectedNode.type : 'sticky';
-         },
-         editNode(node, screenPos) {
-            this.editing = true;
-            this.selectedNode = node;
-            this.$.stickEditor.classList.add("visible");
-
-            this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = node.style ? node.style.color : "#000000";
-            // this.$.stickTextEditor.getElementsByTagName("textarea")[0].style['font-size'] = '32px';
-            this.$.stickEditor.style.background = node.style ? node.style.background : "white";
-
-            let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
-            let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
-            this.animationConfig['startEditCard'] = {
-               name: 'transform-animation',
-               node: this.$.stickEditor,
-               transformOrigin: '50% 50%',
-               transformFrom: 'scale(' + scaleX + ',' + scaleY + ')',
-               transformTo: 'scale(1)',
-               timing: {
-                  duration: 300
-               }
-            };
-            this.playAnimation('startEditCard');
-
-            let x = screenPos.x - this.$.stickEditor.clientWidth / 2;
-            let y = screenPos.y - this.$.stickEditor.clientHeight / 2;
-            this.$.stickEditor.style.top = '' + y + 'px';
-            this.$.stickEditor.style.left = '' + x + 'px';
-         },
-         stopEditNode() {
-            this.selectedNode.width = this.$.editorContent.clientWidth + 10;
-            this.selectedNode.height = this.$.editorContent.clientHeight + 10;
-
-            let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
-            let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
-            this.animationConfig['startEditCard'] = [{
-                  name: 'transform-animation',
-                  node: this.$.stickEditor,
-                  transformOrigin: '50% 50%',
-                  transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
-                  transformFrom: 'scale(1)',
-                  timing: {
-                     duration: 300
-                  }
-               }, {
-                  name: 'fade-out-animation',
-                  node: this.$.stickEditor,
-                  timing: {
-                     delay: 150,
-                     duration: 200
-                  }
-               }
-            ];
-            this.playAnimation('startEditCard');
-            this.debounce("stop", () => {
-               this.editing = false;
-               this.$.stickEditor.classList.remove("visible");
-            }, 300);
-         },
-         getPositionOnBoard(x, y){
-            let pos =  this.linkedGraph.getDiagramCoords(x,y);
-            return pos;
-         },
-         isOverTrash(pos) {
-            let overTrash = false;
-            if (pos && pos.x && pos.y) {
-               let bounds = this.$.trash.getBoundingClientRect();
-               let boardBounds = this.$.d3Board.getBoundingClientRect();
-               let x = pos.x + boardBounds.left;
-               let y = pos.y + boardBounds.top;
-               overTrash = true;
-               overTrash = overTrash && (x > bounds.left && x < (bounds.left + bounds.width));
-               overTrash = overTrash && (y > bounds.top && y < (bounds.top + bounds.height));
-            }
-            return overTrash;
-         }
-      });
-   </script>
+        });
+    </script>
 
 </dom-module>
