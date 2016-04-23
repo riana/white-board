@@ -369,18 +369,106 @@
         }
 
         addImageTest(imageData, position, dimension) {
+            this.imageTest = {
+                data: imageData,
+                position: position,
+                dimension: dimension,
+                selected: false
+            };
+
+            var drag = d3.behavior.drag()
+                .on('dragstart', (e) => {
+                    if (this.imageTest.selected) {
+                        d3.event.sourceEvent.preventDefault();
+                        d3.event.sourceEvent.stopPropagation();
+                    }
+                })
+                .on('drag', (e) => {
+                    if (this.imageTest.selected) {
+                        this.imageTest.position.x = d3.event.x - dimension.width / 2;
+                        this.imageTest.position.y = d3.event.y - dimension.height / 2;
+                        this._updateImagePosition();
+                        d3.event.sourceEvent.preventDefault();
+                        d3.event.sourceEvent.stopPropagation();
+                    }
+
+                });
+
             this.container.append("svg:image")
+                .attr("id", "imageTest")
                 .attr("xlink:href", function(d) {
                     return imageData;
                 })
-                .attr("x", function(d) {
-                    return position.x - dimension.width / 2;
+                .call(drag)
+                .on("click", (e) => {
+                    this.imageTest.selected = !this.imageTest.selected;
+                    this._updateImagePosition();
+                });
+
+
+            let resizeDrag = d3.behavior.drag()
+                .on('dragstart', (e) => {
+                    if (this.imageTest.selected) {
+                        d3.event.sourceEvent.preventDefault();
+                        d3.event.sourceEvent.stopPropagation();
+                    }
                 })
-                .attr("y", function(d) {
-                    return position.y - dimension.height / 2;
+                .on('drag', (e) => {
+                    if (this.imageTest.selected) {
+                        // let dMove = (d3.event.dx * d3.event.dx) + (d3.event.dy * d3.event.dy);
+                        // let diagonal = (this.imageTest.dimension.width * this.imageTest.dimension.width) + (this.imageTest.dimension.height * this.imageTest.dimension.height);
+                        // let ratio = dMove / diagonal;
+                        this.imageTest.dimension.width += d3.event.dx;
+                        this.imageTest.dimension.height += d3.event.dy;
+                        this._updateImagePosition();
+                        d3.event.sourceEvent.preventDefault();
+                        d3.event.sourceEvent.stopPropagation();
+                    }
+
+                });
+
+            this.container.append("svg:rect")
+                .attr("id", "imageRect")
+                .attr("fill", "none")
+                .attr("stroke", "#FF0000");
+
+            this.container.append("svg:circle")
+                .attr("id", "imageResize")
+                .attr("fill", "#EE0000")
+                .attr("stroke", "#FF0000")
+                .attr('r', 10)
+                .call(resizeDrag);
+
+            this._updateImagePosition()
+        }
+
+        _updateImagePosition() {
+
+            this.container.selectAll('#imageTest')
+                .attr('x', this.imageTest.position.x)
+                .attr('y', this.imageTest.position.y)
+                .attr("height", this.imageTest.dimension.height)
+                .attr("width", this.imageTest.dimension.width);
+
+            this.container.selectAll("#imageRect")
+                .attr("visibility", (e) => {
+                    return this.imageTest.selected ? "visible" : "hidden";
                 })
-                .attr("height", dimension.height)
-                .attr("width", dimension.width);
+                .attr("x", (d) => {
+                    return this.imageTest.position.x - 2;
+                })
+                .attr("y", (d) => {
+                    return this.imageTest.position.y - 2;
+                })
+                .attr("height", this.imageTest.dimension.height + 4)
+                .attr("width", this.imageTest.dimension.width + 4);
+
+            this.container.selectAll('#imageResize')
+                .attr("visibility", (e) => {
+                    return this.imageTest.selected ? "visible" : "hidden";
+                })
+                .attr('cx', this.imageTest.position.x + this.imageTest.dimension.width)
+                .attr('cy', this.imageTest.position.y + this.imageTest.dimension.height);
         }
 
     }
