@@ -2,6 +2,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-image/iron-image.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../../bower_components/paper-styles/paper-styles.html">
@@ -102,7 +103,7 @@
             }
         </style>
 
-        <div id="d3Board">
+        <div id="d3Board" on-drop="_handleDrop">
             <div id="trash">
                 <iron-icon id="trashIcon" icon="delete"></iron-icon>
             </div>
@@ -144,6 +145,12 @@
                 }
             },
             attached() {
+
+                this.$.d3Board.ondragover = (e) => {
+                    this._dragOver(e)
+                    return false;
+                };
+
                 this.linkedGraph = new LinkedGraph("#d3Board");
                 this.linkedGraph.pencilFilter = false;
 
@@ -301,6 +308,40 @@
                     overTrash = overTrash && (y > bounds.top && y < (bounds.top + bounds.height));
                 }
                 return overTrash;
+            },
+            _handleDrop(e) {
+                e.preventDefault();
+                var file = e.dataTransfer.files[0],
+                    reader = new FileReader();
+
+                //   file.type.lastIndexOf("video/")
+                console.log("file type : ", file.type, file.type.lastIndexOf("image/"));
+
+                reader.onload = (event) => {
+                    console.log(e);
+                    let position = this.getPositionOnBoard(e.offsetX, e.offsetY);
+                    let imageData = event.target.result;
+
+                    var img = new Image;
+                    img.onload = () => {
+                       this.linkedGraph.addImageTest(imageData, position, {
+                          width : img.width,
+                          height : img.height,
+                       });
+
+                    };
+
+                    img.src = imageData;
+
+
+
+                };
+                reader.readAsDataURL(file);
+
+                return false;
+            },
+            _dragOver(e) {
+                return false;
             }
         });
     </script>

@@ -356,16 +356,31 @@
             this.updateNodes(data);
         }
 
-        applyZoom(data){
-           if (data.view) {
-               if (!isNaN(data.view.scale) && !isNaN(data.view.translate[0]) && !isNaN(data.view.translate[1])) {
-                  this.scale = data.view.scale;
-                  this.translate = data.view.translate;
-                   this.zoom.translate(data.view.translate);
-                   this.zoom.scale(data.view.scale);
-                   this.container.attr("transform", "translate(" + data.view.translate + ")scale(" + data.view.scale + ")");
-               }
-           }
+        applyZoom(data) {
+            if (data.view) {
+                if (!isNaN(data.view.scale) && !isNaN(data.view.translate[0]) && !isNaN(data.view.translate[1])) {
+                    this.scale = data.view.scale;
+                    this.translate = data.view.translate;
+                    this.zoom.translate(data.view.translate);
+                    this.zoom.scale(data.view.scale);
+                    this.container.attr("transform", "translate(" + data.view.translate + ")scale(" + data.view.scale + ")");
+                }
+            }
+        }
+
+        addImageTest(imageData, position, dimension) {
+            this.container.append("svg:image")
+                .attr("xlink:href", function(d) {
+                    return imageData;
+                })
+                .attr("x", function(d) {
+                    return position.x - dimension.width / 2;
+                })
+                .attr("y", function(d) {
+                    return position.y - dimension.height / 2;
+                })
+                .attr("height", dimension.height)
+                .attr("width", dimension.width);
         }
 
     }
