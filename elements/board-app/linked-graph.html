@@ -124,6 +124,8 @@
                     if (dt < 50 && pickedNodes.length === 0) {
                         let coords = getDiagramCoords(d3.event.x, d3.event.y, self.translate, self.scale);
                         console.log('click on board : ', d3.event, coords);
+                        self.selectedImage = null;
+                        self.updateImages(self.data);
                         self.onBoardClicked(d3.event, coords);
                     }
 
@@ -194,6 +196,8 @@
 
                 });
             this.data = {}
+
+            this.setupImagesNodes();
         }
 
         getDiagramCoords(x, y) {
@@ -337,12 +341,8 @@
                     sanitize: true
                 });
             }).attr("updateStyle", function(d) {
-                // insertLinebreaks(d);
-                // this.classList.add("green-card");
                 this.style.color = d.style ? d.style.color : "#000000";
                 this.style.background = d.style ? d.style.background : "none";
-                // this.style.width = '300px';
-                // this.style.height = '70px';
             });
         }
 
@@ -350,12 +350,14 @@
 
             this.applyZoom(data);
             this.updateGraph(data);
+            this.updateImages(data);
         }
         updateGraph(data) {
             let self = this;
             this.data = data;
             this.updateEdges(data);
             this.updateNodes(data);
+            this.updateImages(data);
         }
 
         applyZoom(data) {
@@ -370,60 +372,55 @@
             }
         }
 
-        addImageTest(imageData, position, dimension) {
-            this.imageTest = {
-                data: imageData,
-                position: position,
-                dimension: dimension,
-                selected: false,
-                rotation: 0
-            };
+      //   addImageTest(imageData, position, dimension) {
+      //       let imageTest = {
+      //           data: imageData,
+      //           position: position,
+      //           dimension: dimension,
+      //           selected: false,
+      //           rotation: 0
+      //       };
+        //
+        //
+      //       this.data.images.push(imageTest);
+      //       this.updateImages(this.data);
+      //   }
 
-            var drag = d3.behavior.drag()
-                .on('dragstart', (e) => {
-                    if (this.imageTest.selected) {
-                        d3.event.sourceEvent.preventDefault();
-                        d3.event.sourceEvent.stopPropagation();
-                    }
+
+        setupImagesNodes() {
+            this.imageDrag = d3.behavior.drag()
+                .on('dragstart', (d) => {
+                    //   if (this.imageTest.selected) {
+                    d3.event.sourceEvent.preventDefault();
+                    d3.event.sourceEvent.stopPropagation();
+                    //   }
                 })
-                .on('drag', (e) => {
-                    if (this.imageTest.selected) {
-                        this.imageTest.position.x = d3.event.x - dimension.width / 2;
-                        this.imageTest.position.y = d3.event.y - dimension.height / 2;
-                        this._updateImagePosition();
-                        d3.event.sourceEvent.preventDefault();
-                        d3.event.sourceEvent.stopPropagation();
-                    }
+                .on('drag', (d) => {
+                    //   if (this.imageTest.selected) {
+                    d.position.x = d3.event.x - d.dimension.width / 2;
+                    d.position.y = d3.event.y - d.dimension.height / 2;
+                    this.updateImages(this.data);
+                    d3.event.sourceEvent.preventDefault();
+                    d3.event.sourceEvent.stopPropagation();
+                    //   }
 
                 });
-
-            this.container.append("svg:image")
-                .attr("id", "imageTest")
-                .attr("xlink:href", function(d) {
-                    return imageData;
-                })
-                .call(drag)
-                .on("click", (e) => {
-                    this.imageTest.selected = !this.imageTest.selected;
-                    this._updateImagePosition();
-                });
-
 
             let resizeDrag = d3.behavior.drag()
-                .on('dragstart', (e) => {
-                    if (this.imageTest.selected) {
-                        d3.event.sourceEvent.preventDefault();
-                        d3.event.sourceEvent.stopPropagation();
-                    }
+                .on('dragstart', (d) => {
+                    //   if (this.imageTest.selected) {
+                    d3.event.sourceEvent.preventDefault();
+                    d3.event.sourceEvent.stopPropagation();
+                    //   }
                 })
-                .on('drag', (e) => {
-                    if (this.imageTest.selected) {
+                .on('drag', (d) => {
+                    if (this.selectedImage) {
                         // let dMove = (d3.event.dx * d3.event.dx) + (d3.event.dy * d3.event.dy);
                         // let diagonal = (this.imageTest.dimension.width * this.imageTest.dimension.width) + (this.imageTest.dimension.height * this.imageTest.dimension.height);
                         // let ratio = dMove / diagonal;
-                        this.imageTest.dimension.width += d3.event.dx;
-                        this.imageTest.dimension.height += d3.event.dy;
-                        this._updateImagePosition();
+                        this.selectedImage.dimension.width += d3.event.dx;
+                        this.selectedImage.dimension.height += d3.event.dy;
+                        this.updateImages(this.data);
                         d3.event.sourceEvent.preventDefault();
                         d3.event.sourceEvent.stopPropagation();
                     }
@@ -432,17 +429,17 @@
 
             let rotateDrag = d3.behavior.drag()
                 .on('dragstart', (e) => {
-                    if (this.imageTest.selected) {
-                        d3.event.sourceEvent.preventDefault();
-                        d3.event.sourceEvent.stopPropagation();
-                    }
+                    //   if (this.imageTest.selected) {
+                    d3.event.sourceEvent.preventDefault();
+                    d3.event.sourceEvent.stopPropagation();
+                    //   }
                 })
                 .on('drag', (e) => {
-                    if (this.imageTest.selected) {
+                    if (this.selectedImage) {
                         let amount = d3.event.dx / 10;
-                        this.imageTest.rotation -= amount;
+                        this.selectedImage.rotation -= amount;
 
-                        this._updateImagePosition();
+                        this.updateImages(this.data);
                         d3.event.sourceEvent.preventDefault();
                         d3.event.sourceEvent.stopPropagation();
                     }
@@ -475,45 +472,90 @@
                 .attr('r', 10)
                 .call(rotateDrag);
 
-            this._updateImagePosition()
         }
 
-        _updateImagePosition() {
+        updateImages(data) {
+            var imageNodes = this.nodesLayer.selectAll(".image-node")
+                .data(data.images);
 
-            let rx = this.imageTest.position.x + this.imageTest.dimension.width / 2;
-            let ry = this.imageTest.position.y + this.imageTest.dimension.height / 2;
-            let rotateTransform = "rotate(" + this.imageTest.rotation + " " + rx + " " + ry + ")";
+            imageNodes.enter().append("svg:image")
+                .attr("class", "image-node")
+                .attr("xlink:href", function(d) {
+                    return d.data;
+                })
+                .call(this.imageDrag)
+                .on("click", (d) => {
+                   if(this.selectedImage === d){
+                      this.selectedImage = null;
+                   }else {
+                     this.selectedImage = d;
+                   }
+
+                    this.updateImages(this.data);
+                });
+
+            function rotateTransform(d) {
+                if (d) {
+                    let rx = d.position.x + d.dimension.width / 2;
+                    let ry = d.position.y + d.dimension.height / 2;
+                    let rotateTransform = "rotate(" + d.rotation + " " + rx + " " + ry + ")";
+                    return rotateTransform;
+                }
+                return "";
+            }
 
             this.controlLayer.attr("visibility", (e) => {
-                return this.imageTest.selected ? "visible" : "hidden";
+                return this.selectedImage ? "visible" : "hidden";
             });
 
-            this.container.selectAll('#imageTest')
-                .attr('x', this.imageTest.position.x)
-                .attr('y', this.imageTest.position.y)
-                .attr("height", this.imageTest.dimension.height)
-                .attr("width", this.imageTest.dimension.width)
+            this.nodesLayer.selectAll('.image-node')
+                .attr('x', function(d) {
+                    return d.position.x;
+                })
+                .attr('y', function(d) {
+                    return d.position.y;
+                })
+                .attr("height", function(d) {
+                    return d.dimension.height;
+                })
+                .attr("width", function(d) {
+                    return d.dimension.width;
+                })
                 .attr("transform", rotateTransform);
 
             this.controlLayer.selectAll("#imageRect")
                 .attr("x", (d) => {
-                    return this.imageTest.position.x - 2;
+                    return this.selectedImage ? this.selectedImage.position.x - 2 : 0;
                 })
                 .attr("y", (d) => {
-                    return this.imageTest.position.y - 2;
+                    return this.selectedImage ? this.selectedImage.position.y - 2 : 0;
                 })
-                .attr("height", this.imageTest.dimension.height + 4)
-                .attr("width", this.imageTest.dimension.width + 4)
+                .attr("height", (d) => {
+                    return this.selectedImage ? this.selectedImage.dimension.height + 4 : 0;
+                })
+                .attr("width", (d) => {
+                    return this.selectedImage ? this.selectedImage.dimension.width + 4 : 0;
+                })
                 .attr("transform", rotateTransform);
+
+            this.controlLayer.attr("transform", () => {
+                if (this.selectedImage) {
+                    return rotateTransform(this.selectedImage);
+                }
+                return '';
+            });
 
             this.controlLayer.selectAll('#imageResize')
-                .attr('cx', this.imageTest.position.x + this.imageTest.dimension.width)
-                .attr('cy', this.imageTest.position.y + this.imageTest.dimension.height)
-                .attr("transform", rotateTransform);
+                .attr('cx', (d) => {
+                    return this.selectedImage ? this.selectedImage.position.x + this.selectedImage.dimension.width + 4 : 0;
+                })
+                .attr('cy', (d) => {
+                    return this.selectedImage ? this.selectedImage.position.y + this.selectedImage.dimension.height + 4 : 0;
+                })
 
             let rotateHandleCenter = {
-                x: this.imageTest.position.x + this.imageTest.dimension.width / 2,
-                y: this.imageTest.position.y + this.imageTest.dimension.height
+                x: this.selectedImage ? this.selectedImage.position.x + this.selectedImage.dimension.width / 2 : 0,
+                y: this.selectedImage ? this.selectedImage.position.y + this.selectedImage.dimension.height : 0
             }
 
             this.controlLayer.selectAll('#rotateLine')
@@ -529,12 +571,10 @@
                 .attr("y2", (d) => {
                     return rotateHandleCenter.y + 40;
                 })
-                .attr("transform", rotateTransform);
 
             this.controlLayer.selectAll('#rotateCircle')
                 .attr('cx', rotateHandleCenter.x)
                 .attr('cy', rotateHandleCenter.y + 40)
-                .attr("transform", rotateTransform);
         }
 
     }

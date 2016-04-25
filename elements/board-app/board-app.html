@@ -67,7 +67,7 @@
                     </paper-material>
                 </template>
             </div>
-            <board-surface id="board" class="flex" data="{{boardContent}}"></board-surface>
+            <board-surface id="board" class="flex" data="{{boardContent}}" on-drop="_handleDrop"></board-surface>
         </div>
         <backdrop-view id="loadDialog">
             <board-selector boards="[[boardsIndex]]" on-load="_loadBoard" on-delete="_delete"></board-selector>
@@ -88,7 +88,8 @@
                     value: {
                         title: "My Board",
                         nodes: [],
-                        links: []
+                        links: [],
+                        images: []
                     }
                 },
                 stickStyles: {
@@ -126,11 +127,18 @@
             },
             attached() {
                 // this.$.storage.load(selected);
+                this.$.board.ondragover = (e) => {
+                    this._dragOver(e)
+                    return false;
+                };
                 this._createBoard();
             },
             _loaded(e) {
                 let data = e.detail;
                 if (data) {
+                    if (!data.images) {
+                        data.images = [];
+                    }
                     this.boardContent = data;
                     console.log(this.boardContent);
                 }
@@ -155,7 +163,8 @@
                     id: UUID.generate(),
                     title: "Untitled",
                     nodes: [],
-                    links: []
+                    links: [],
+                    images: []
                 };
             },
             _addNode(newNode, e) {
@@ -201,6 +210,50 @@
             },
             _insertImage() {
                 console.log("_insertImage");
+            },
+
+            _handleDrop(e) {
+                e.preventDefault();
+                var file = e.dataTransfer.files[0],
+                    reader = new FileReader();
+
+                //   file.type.lastIndexOf("video/")
+                console.log("file type : ", file.type, file.type.lastIndexOf("image/"));
+
+                reader.onload = (event) => {
+                    console.log(e);
+                    let position = this.$.board.getPositionOnBoard(e.offsetX, e.offsetY);
+                    let imageData = event.target.result;
+
+                    var img = new Image;
+                    img.onload = () => {
+                        let imageTest = {
+                            data: imageData,
+                            position: position,
+                            dimension: {
+                                width: img.width,
+                                height: img.height,
+                            },
+                            rotation: 0
+                        };
+
+
+                        this.boardContent.images.push(imageTest);
+                        this.$.board._dataUpdated();
+
+                    };
+
+                    img.src = imageData;
+
+
+
+                };
+                reader.readAsDataURL(file);
+
+                return false;
+            },
+            _dragOver(e) {
+                return false;
             }
         });
     </script>
