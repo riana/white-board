@@ -54,6 +54,15 @@
         };
     }
 
+    function rotate(cx, cy, x, y, angle) {
+        var radians = (Math.PI / 180) * angle,
+            cos = Math.cos(radians),
+            sin = Math.sin(radians),
+            nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+            ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+        return [nx, ny];
+    }
+
 
     if (typeof require === "function") {
         var d3 = require("d3");
@@ -217,14 +226,7 @@
                     dr = Math.sqrt(dx * dx + dy * dy);
                 // Curved line
                 // return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
-                function rotate(cx, cy, x, y, angle) {
-                    var radians = (Math.PI / 180) * angle,
-                        cos = Math.cos(radians),
-                        sin = Math.sin(radians),
-                        nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
-                        ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
-                    return [nx, ny];
-                }
+
                 var p2 = rotate(0, 0, dx, dy, 90);
                 var scale = dr / 4;
                 scale = scale * Math.sign(dy) / dr;
@@ -373,7 +375,8 @@
                 data: imageData,
                 position: position,
                 dimension: dimension,
-                selected: false
+                selected: false,
+                rotation: 0
             };
 
             var drag = d3.behavior.drag()
@@ -427,33 +430,72 @@
 
                 });
 
-            this.container.append("svg:rect")
+            let rotateDrag = d3.behavior.drag()
+                .on('dragstart', (e) => {
+                    if (this.imageTest.selected) {
+                        d3.event.sourceEvent.preventDefault();
+                        d3.event.sourceEvent.stopPropagation();
+                    }
+                })
+                .on('drag', (e) => {
+                    if (this.imageTest.selected) {
+                        let amount = d3.event.dx / 10;
+                        this.imageTest.rotation -= amount;
+
+                        this._updateImagePosition();
+                        d3.event.sourceEvent.preventDefault();
+                        d3.event.sourceEvent.stopPropagation();
+                    }
+
+                });
+
+            this.controlLayer = this.container.append("g");
+
+            this.controlLayer.append("svg:rect")
                 .attr("id", "imageRect")
                 .attr("fill", "none")
                 .attr("stroke", "#FF0000");
 
-            this.container.append("svg:circle")
+            this.controlLayer.append("svg:circle")
                 .attr("id", "imageResize")
                 .attr("fill", "#EE0000")
                 .attr("stroke", "#FF0000")
                 .attr('r', 10)
                 .call(resizeDrag);
 
+
+            this.controlLayer.append("svg:line")
+                .attr("id", "rotateLine")
+                .attr("stroke", "#FF0000");
+
+            this.controlLayer.append("svg:circle")
+                .attr("id", "rotateCircle")
+                .attr("fill", "#EE0000")
+                .attr("stroke", "#FF0000")
+                .attr('r', 10)
+                .call(rotateDrag);
+
             this._updateImagePosition()
         }
 
         _updateImagePosition() {
 
+            let rx = this.imageTest.position.x + this.imageTest.dimension.width / 2;
+            let ry = this.imageTest.position.y + this.imageTest.dimension.height / 2;
+            let rotateTransform = "rotate(" + this.imageTest.rotation + " " + rx + " " + ry + ")";
+
+            this.controlLayer.attr("visibility", (e) => {
+                return this.imageTest.selected ? "visible" : "hidden";
+            });
+
             this.container.selectAll('#imageTest')
                 .attr('x', this.imageTest.position.x)
                 .attr('y', this.imageTest.position.y)
                 .attr("height", this.imageTest.dimension.height)
-                .attr("width", this.imageTest.dimension.width);
+                .attr("width", this.imageTest.dimension.width)
+                .attr("transform", rotateTransform);
 
-            this.container.selectAll("#imageRect")
-                .attr("visibility", (e) => {
-                    return this.imageTest.selected ? "visible" : "hidden";
-                })
+            this.controlLayer.selectAll("#imageRect")
                 .attr("x", (d) => {
                     return this.imageTest.position.x - 2;
                 })
@@ -461,14 +503,38 @@
                     return this.imageTest.position.y - 2;
                 })
                 .attr("height", this.imageTest.dimension.height + 4)
-                .attr("width", this.imageTest.dimension.width + 4);
+                .attr("width", this.imageTest.dimension.width + 4)
+                .attr("transform", rotateTransform);
 
-            this.container.selectAll('#imageResize')
-                .attr("visibility", (e) => {
-                    return this.imageTest.selected ? "visible" : "hidden";
-                })
+            this.controlLayer.selectAll('#imageResize')
                 .attr('cx', this.imageTest.position.x + this.imageTest.dimension.width)
-                .attr('cy', this.imageTest.position.y + this.imageTest.dimension.height);
+                .attr('cy', this.imageTest.position.y + this.imageTest.dimension.height)
+                .attr("transform", rotateTransform);
+
+            let rotateHandleCenter = {
+                x: this.imageTest.position.x + this.imageTest.dimension.width / 2,
+                y: this.imageTest.position.y + this.imageTest.dimension.height
+            }
+
+            this.controlLayer.selectAll('#rotateLine')
+                .attr("x1", (d) => {
+                    return rotateHandleCenter.x;
+                })
+                .attr("y1", (d) => {
+                    return rotateHandleCenter.y;
+                })
+                .attr("x2", (d) => {
+                    return rotateHandleCenter.x;
+                })
+                .attr("y2", (d) => {
+                    return rotateHandleCenter.y + 40;
+                })
+                .attr("transform", rotateTransform);
+
+            this.controlLayer.selectAll('#rotateCircle')
+                .attr('cx', rotateHandleCenter.x)
+                .attr('cy', rotateHandleCenter.y + 40)
+                .attr("transform", rotateTransform);
         }
 
     }
