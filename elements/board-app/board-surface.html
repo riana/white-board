@@ -138,7 +138,8 @@
                     type: Object,
                     value: {
                         nodes: [],
-                        links: []
+                        links: [],
+                        images: []
                     },
                     notify: true,
                     observer: '_dataUpdated'
@@ -309,7 +310,11 @@
                 }
                 return overTrash;
             },
-            
+
+            addMedia(id, data){
+               this.linkedGraph.addMedia(id, data);
+            }
+
         });
     </script>
 

@@ -1,164 +1,255 @@
 <!DOCTYPE html>
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
-<!--Imports go here-->
+
+<link rel="import" href="../utils/HttpRequest.html">
 
 <dom-module id="board-storage">
 
-   <template>
-      <style is="custom-style">
-         :host {
-            display: block;
-         }
-      </style>
+    <template>
+        <style is="custom-style">
+            :host {
+                display: block;
+            }
+        </style>
 
-      <iron-ajax id="loadIndex" url="/api/load" handle-as="json" on-response="_boardsIndexloaded" last-response="{{boardIndex}}" debounce-duration="300"></iron-ajax>
-      <iron-ajax id="loadAjax" url="/api/load" handle-as="json" on-response="_loaded" last-response="{{loadedData}}" debounce-duration="300"></iron-ajax>
-      <iron-ajax id="saveAjax" url="/api/save" method="POST" content-type="application/json" on-response="_saved" debounce-duration="300"></iron-ajax>
-      <iron-ajax id="deleteAjax" url="/api/delete" method="DELETE" content-type="application/json" on-response="_deleted" debounce-duration="300"></iron-ajax>
+        <iron-ajax id="loadIndex" url="/api/load" handle-as="json" on-response="_boardsIndexloaded" last-response="{{boardIndex}}" debounce-duration="300"></iron-ajax>
+        <iron-ajax id="loadAjax" url="/api/load" handle-as="json" on-response="_loaded" last-response="{{loadedData}}" debounce-duration="300"></iron-ajax>
+        <iron-ajax id="saveAjax" url="/api/save" method="POST" content-type="application/json" on-response="_saved" debounce-duration="300"></iron-ajax>
+        <iron-ajax id="deleteAjax" url="/api/delete" method="DELETE" content-type="application/json" on-response="_deleted" debounce-duration="300"></iron-ajax>
 
-   </template>
+    </template>
 
-   <script>
-      "use strict";
+    <script>
+        "use strict";
 
-      Polymer({
-         is: "board-storage",
-         properties: {
-            loadedData: {
-               type: "Object",
-               value: {}
+        Polymer({
+            is: "board-storage",
+            properties: {
+                loadedData: {
+                    type: "Object",
+                    value: {}
+                },
+                boardIndex: {
+                    type: Array,
+                    value: [],
+                    notify: true
+                },
             },
-            boardIndex: {
-               type: Array,
-               value: [],
-               notify: true
+            ready() {
+                if (typeof require === "function") {
+                    this.fileStorage = require("./server/storage.js");
+                }
+                this.startUp = true;
+                this.loadBoardsIndex();
             },
-         },
-         ready() {
-            if (typeof require === "function") {
-               this.fileStorage = require("./server/storage.js");
-            }
-            this.startUp = true;
-            this.loadBoardsIndex();
-         },
-         loadBoardsIndex() {
-            if (this.fileStorage) {
-               this.fileStorage.load('_boardsIndex', (data) => {
-                  this.boardIndex = JSON.parse(data);
-                  this._boardsIndexloaded();
-               });
-            } else {
-               this.$.loadIndex.params = {
-                  id: '_boardsIndex'
-               };
-               this.$.loadIndex.generateRequest();
-            }
-         },
-         saveBoardsIndex() {
-            this._electSave('_boardsIndex', this.boardIndex);
-         },
-         _boardsIndexloaded(e) {
+            loadBoardsIndex() {
+                if (this.fileStorage) {
+                    this.fileStorage.load('_boardsIndex', (data) => {
+                        this.boardIndex = JSON.parse(data);
+                        this._boardsIndexloaded();
+                    });
+                } else {
+                    this.$.loadIndex.params = {
+                        id: '_boardsIndex'
+                    };
+                    this.$.loadIndex.generateRequest();
+                }
+            },
+            saveBoardsIndex() {
+                this._electSave('_boardsIndex', this.boardIndex);
+            },
+            _boardsIndexloaded(e) {
 
-            if (this.boardIndex.error) {
-               this.boardIndex = [];
-               this.saveBoardsIndex();
-            } else {
-               if (this.startUp && this.boardIndex.length > 0) {
-                  this.load(this.boardIndex[0].id);
-               }
-            }
-            this.startUp = false;
-         },
-         _loaded(e) {
-            if (this.loadedData.error) {
-               console.error("Error loading board");
-            } else {
-               this.fire("loaded", this.loadedData);
-            }
-         },
-         load(path) {
-            if (this.fileStorage) {
-               this.fileStorage.load('boards/' + path, (data) => {
-                  this.loadedData = JSON.parse(data);
-                  this._loaded();
-               });
-            } else {
-               this.$.loadAjax.params = {
-                  id: 'boards/' + path
-               };
-               this.$.loadAjax.generateRequest();
-            }
-         },
-         updateIndex(data) {
-            let index = {
-               id: data.id,
-               title: data.title
-            };
-            let matchingBoards = this.boardIndex.filter(item => {
-               return item.id === data.id;
-            });
-            if (matchingBoards.length === 1) {
-               let oldBoardIndex = matchingBoards[0];
-               let index = this.boardIndex.indexOf(oldBoardIndex);
-               this.boardIndex.splice(index, 1);
-            }
-            this.boardIndex.unshift(index);
-            this.saveBoardsIndex();
-         },
-         _saved(e) {
-            console.log(e);
-         },
-         save(data) {
-            this._electSave('boards/' + data.id, data);
-            this.updateIndex(data);
-         },
-         _deleted() {
-            console.log(" => deleted : ");
-         },
-         delete(data) {
-            let matchingBoards = this.boardIndex.filter(item => {
-               return item.id === data.id;
-            });
-            if (matchingBoards.length === 1) {
-               let oldBoardIndex = matchingBoards[0];
-               let index = this.boardIndex.indexOf(oldBoardIndex);
-               this.splice("boardIndex", index, 1);
-               this.saveBoardsIndex();
-               this._electDelete('boards/' + data.id);
-            }
-         },
-         _electSave(path, data) {
-            if (this.fileStorage) {
-               this.fileStorage.save(path, data, () => {
-                  this._saved();
-               });
-            } else {
-               this.$.saveAjax.params = {
-                  id: path
-               };
-               this.$.saveAjax.body = data;
-               this.$.saveAjax.onResponse = () => {
-                  console.log("onResponse");
-               };
-               this.$.saveAjax.generateRequest();
-            }
-         },
-         _electDelete(path) {
-            console.log("elect delete : ", path);
-            if (this.fileStorage) {
-               this.fileStorage.delete(path, () => {
-                  this._deleted();
-               });
-            } else {
-               this.$.deleteAjax.body = {
-                  id: path
-               };
-               this.$.deleteAjax.generateRequest();
-            }
-         }
+                if (this.boardIndex.error) {
+                    this.boardIndex = [];
+                    this.saveBoardsIndex();
+                } else {
+                    if (this.startUp && this.boardIndex.length > 0) {
+                        this.load(this.boardIndex[0].id);
+                    }
+                }
+                this.startUp = false;
+            },
+            _loaded(e) {
+                if (this.loadedData.error) {
+                    console.error("Error loading board");
+                } else {
+                    this.fire("loaded", this.loadedData);
+                }
+            },
+            load(path) {
+                if (this.fileStorage) {
+                    this.fileStorage.load('boards/' + path, (data) => {
+                        this.loadedData = JSON.parse(data);
+                        this._loaded();
+                    });
+                } else {
+                    this.$.loadAjax.params = {
+                        id: 'boards/' + path
+                    };
+                    this.$.loadAjax.generateRequest();
+                }
+            },
+            updateIndex(data) {
+                let index = {
+                    id: data.id,
+                    title: data.title
+                };
+                let matchingBoards = this.boardIndex.filter(item => {
+                    return item.id === data.id;
+                });
+                if (matchingBoards.length === 1) {
+                    let oldBoardIndex = matchingBoards[0];
+                    let index = this.boardIndex.indexOf(oldBoardIndex);
+                    this.boardIndex.splice(index, 1);
+                }
+                this.boardIndex.unshift(index);
+                this.saveBoardsIndex();
+            },
+            _saved(e) {
+                console.log(e);
+            },
+            save(data) {
+                this._electSave('boards/' + data.id, data);
+                this.updateIndex(data);
+            },
+            _deleted() {
+                console.log(" => deleted : ");
+            },
+            delete(data) {
+                let matchingBoards = this.boardIndex.filter(item => {
+                    return item.id === data.id;
+                });
+                if (matchingBoards.length === 1) {
+                    let oldBoardIndex = matchingBoards[0];
+                    let index = this.boardIndex.indexOf(oldBoardIndex);
+                    this.splice("boardIndex", index, 1);
+                    this.saveBoardsIndex();
+                    this._electDelete('boards/' + data.id);
+                }
+            },
+            _electSave(path, data) {
+                if (this.fileStorage) {
+                    this.fileStorage.save(path, data, () => {
+                        this._saved();
+                    });
+                } else {
+                    this.$.saveAjax.params = {
+                        id: path
+                    };
+                    this.$.saveAjax.body = data;
+                    this.$.saveAjax.onResponse = () => {
+                        console.log("onResponse");
+                    };
+                    this.$.saveAjax.generateRequest();
+                }
+            },
+            _electDelete(path) {
+                console.log("elect delete : ", path);
+                if (this.fileStorage) {
+                    this.fileStorage.delete(path, () => {
+                        this._deleted();
+                    });
+                } else {
+                    this.$.deleteAjax.body = {
+                        id: path
+                    };
+                    this.$.deleteAjax.generateRequest();
+                }
+            },
+            getImage(boardId, mediaId, cb) {
+                if (this.fileStorage) {
+                   this.fileStorage.loadMedia(`${boardId}/${mediaId}`, (meta, data) => {
+                      cb(data);
+                   });
+                } else {
+                    this.getImageHTTP(boardId, mediaId, cb);
+                }
+            },
+            getImageHTTP(boardId, mediaId, cb) {
+                let url = `api/media?path=${boardId}/${mediaId}`;
 
-      });
-   </script>
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+
+                xhr.responseType = 'arraybuffer';
+
+                xhr.onload = function(e) {
+                    if (this.status == 200) {
+                        var uInt8Array = new Uint8Array(this.response);
+                        var i = uInt8Array.length;
+                        var binaryString = new Array(i);
+                        while (i--) {
+                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                        }
+                        var data = binaryString.join('');
+
+                        var base64 = window.btoa(data);
+
+                        cb(base64)
+                    }
+                };
+
+                xhr.send();
+
+            },
+            dataURItoBlob(dataURI) {
+                // convert base64/URLEncoded data component to raw binary data held in a string
+                var byteString;
+                if (dataURI.split(',')[0].indexOf('base64') >= 0)
+                    byteString = atob(dataURI.split(',')[1]);
+                else
+                    byteString = unescape(dataURI.split(',')[1]);
+
+                // separate out the mime component
+                var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+                // write the bytes of the string to a typed array
+                var ia = new Uint8Array(byteString.length);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+
+                //  return new Blob([ia], {
+                //      type: mimeString
+                //  });
+                return ia;
+            },
+            saveImage(boardId, mediaId, file, cb, imageData) {
+                if (this.fileStorage) {
+                    let path = `${boardId}/${mediaId}`;
+                    let meta = {
+                        type: file.type,
+                        originalName: file.name
+                    };
+
+                    this.fileStorage.saveMedia(path, imageData, meta, cb);
+
+                } else {
+                    this.saveImageHTTP(boardId, mediaId, file, cb);
+                }
+            },
+            saveImageHTTP(boardId, mediaId, file, cb) {
+                let url = 'api/media';
+                let params = {
+                    path: `${boardId}/${mediaId}`
+                };
+
+                let request = new HttpRequest("POST", url, params);
+                //  request.headers = {
+                //      authorization: "Bearer " + token
+                //  };
+                request.upload(file, (response) => {
+                    if (response._error) {
+                        //TODO : handle error
+                    }
+                    cb(response);
+                });
+            }
+
+        });
+    </script>
 
 </dom-module>

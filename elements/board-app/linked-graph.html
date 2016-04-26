@@ -352,8 +352,8 @@
             this.updateGraph(data);
             this.updateImages(data);
         }
+
         updateGraph(data) {
-            let self = this;
             this.data = data;
             this.updateEdges(data);
             this.updateNodes(data);
@@ -372,19 +372,19 @@
             }
         }
 
-      //   addImageTest(imageData, position, dimension) {
-      //       let imageTest = {
-      //           data: imageData,
-      //           position: position,
-      //           dimension: dimension,
-      //           selected: false,
-      //           rotation: 0
-      //       };
+        //   addImageTest(imageData, position, dimension) {
+        //       let imageTest = {
+        //           data: imageData,
+        //           position: position,
+        //           dimension: dimension,
+        //           selected: false,
+        //           rotation: 0
+        //       };
         //
         //
-      //       this.data.images.push(imageTest);
-      //       this.updateImages(this.data);
-      //   }
+        //       this.data.images.push(imageTest);
+        //       this.updateImages(this.data);
+        //   }
 
 
         setupImagesNodes() {
@@ -475,21 +475,19 @@
         }
 
         updateImages(data) {
+            let self = this;
             var imageNodes = this.nodesLayer.selectAll(".image-node")
                 .data(data.images);
-
+            imageNodes.exit().remove();
             imageNodes.enter().append("svg:image")
                 .attr("class", "image-node")
-                .attr("xlink:href", function(d) {
-                    return d.data;
-                })
                 .call(this.imageDrag)
                 .on("click", (d) => {
-                   if(this.selectedImage === d){
-                      this.selectedImage = null;
-                   }else {
-                     this.selectedImage = d;
-                   }
+                    if (this.selectedImage === d) {
+                        this.selectedImage = null;
+                    } else {
+                        this.selectedImage = d;
+                    }
 
                     this.updateImages(this.data);
                 });
@@ -509,6 +507,14 @@
             });
 
             this.nodesLayer.selectAll('.image-node')
+                .attr("xlink:href", function(d) {
+                    if (self.medias && self.medias[d.id]) {
+                        console.log("media found");
+                    } else {
+                        console.log("media not found");
+                    }
+                    return self.medias ? self.medias[d.id] : null;
+                })
                 .attr('x', function(d) {
                     return d.position.x;
                 })
@@ -575,6 +581,13 @@
             this.controlLayer.selectAll('#rotateCircle')
                 .attr('cx', rotateHandleCenter.x)
                 .attr('cy', rotateHandleCenter.y + 40)
+        }
+
+        addMedia(id, data) {
+            if (!this.medias) {
+                this.medias = [];
+            }
+            this.medias[id] = data;
         }
 
     }

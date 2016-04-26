@@ -1,0 +1,97 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<script>
+    class HttpRequest {
+
+        constructor(method, url, params) {
+            this.method = method;
+            this.url = url;
+            this.params = params;
+            this.headers = null;
+            this.body = null;
+            this.contentType = "application/json";
+        }
+
+        send(cb) {
+            let url = this.url;
+            let xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (xhttp.readyState == 4) {
+                    let response = null;
+                    if (xhttp.status == 200) {
+                        try {
+                            response = JSON.parse(xhttp.responseText);
+                        } catch (e) {
+                            response = xhttp.responseText;
+                        }
+                    } else {
+                        response = {
+                            _error: xhttp.status
+                        };
+                    }
+                    cb(response, xhttp);
+                }
+            };
+            if (this.params) {
+                url += this.formatParams(this.params);
+            }
+            xhttp.open(this.method, url, true);
+            xhttp.setRequestHeader("Content-type", this.contentType);
+            if (this.headers) {
+                for (let key of Object.keys(this.headers)) {
+                    xhttp.setRequestHeader(key, this.headers[key]);
+                }
+            }
+            if (this.body) {
+                xhttp.send(JSON.stringify(this.body));
+            } else {
+                xhttp.send();
+            }
+        }
+
+        formatParams(params) {
+            return "?" + Object
+                .keys(params)
+                .map(function(key) {
+                    return key + "=" + params[key]
+                })
+                .join("&")
+        }
+
+        upload(file, cb) {
+           let url = this.url;
+            var formData = new FormData();
+            formData.append("file", file);
+
+
+
+
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (xhttp.readyState == 4) {
+                    let response = null;
+                    if (xhttp.status == 200) {
+                        try {
+                            response = JSON.parse(xhttp.responseText);
+                        } catch (e) {
+                            response = xhttp.responseText;
+                        }
+                    } else {
+                        response = {
+                            _error: xhttp.status
+                        };
+                    }
+                    cb(response);
+                }
+            };
+            if (this.params) {
+                url += this.formatParams(this.params);
+            }
+
+            xhttp.enctype = "multipart/form-data";
+            xhttp.open('POST', url, true);
+            xhttp.send(formData);
+        }
+
+    }
+</script>

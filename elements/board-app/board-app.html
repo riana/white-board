@@ -139,10 +139,31 @@
                     if (!data.images) {
                         data.images = [];
                     }
+                    data.images.forEach(image => {
+                        this.$.storage.getImage(data.id, image.id, (resp) => {
+                            //  this._toDataUrl(xhr.response, (b64image) => {
+                            //      console.log("# image transformed : ", b64image);
+                            //      this.$.board.addMedia(image.id, "data:image/jpeg;base64," + b64image);
+                            //  })
+
+                            console.log("#image loaded : ", typeof(resp));
+                            let content =  resp;
+                            if(resp.lastIndexOf(";base64,") === -1){
+                              //  content = "data:" + image.type + ";base64," + content;
+                            }
+                            this.$.board.addMedia(image.id, content);
+
+                        })
+                    });
                     this.boardContent = data;
                     console.log(this.boardContent);
                 }
             },
+            getImage(imageData, callback) {
+
+
+            },
+
             _save() {
                 this.$.storage.save(this.boardContent);
             },
@@ -228,7 +249,8 @@
                     var img = new Image;
                     img.onload = () => {
                         let imageTest = {
-                            data: imageData,
+                            id: UUID.generate(),
+                            type: file.type,
                             position: position,
                             dimension: {
                                 width: img.width,
@@ -237,9 +259,13 @@
                             rotation: 0
                         };
 
+                        this.$.storage.saveImage(this.boardContent.id, imageTest.id, file, (resp) => {
+                            console.log("## Media refresh");
+                            this.$.board.addMedia(imageTest.id, imageData);
+                            this.boardContent.images.push(imageTest);
+                            this.$.board._dataUpdated();
+                        }, imageData);
 
-                        this.boardContent.images.push(imageTest);
-                        this.$.board._dataUpdated();
 
                     };
 
