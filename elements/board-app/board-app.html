@@ -148,14 +148,8 @@
                         })
                     });
                     this.boardContent = data;
-                    console.log(this.boardContent);
                 }
             },
-            getImage(imageData, callback) {
-
-
-            },
-
             _save() {
                 this.$.storage.save(this.boardContent);
             },
@@ -257,17 +251,10 @@
                             this.boardContent.images.push(imageTest);
                             this.$.board._dataUpdated();
                         }, imageData);
-
-
                     };
-
                     img.src = imageData;
-
-
-
                 };
                 reader.readAsDataURL(file);
-
                 return false;
             },
             _dragOver(e) {
