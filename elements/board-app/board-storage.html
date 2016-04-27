@@ -158,17 +158,17 @@
                     this.$.deleteAjax.generateRequest();
                 }
             },
-            getImage(boardId, mediaId, cb) {
+            getImage(boardId, image, cb) {
                 if (this.fileStorage) {
-                   this.fileStorage.loadMedia(`${boardId}/${mediaId}`, (meta, data) => {
+                   this.fileStorage.loadMedia(`${boardId}/${image.id}`, (meta, data) => {
                       cb(data);
                    });
                 } else {
-                    this.getImageHTTP(boardId, mediaId, cb);
+                    this.getImageHTTP(boardId, image, cb);
                 }
             },
-            getImageHTTP(boardId, mediaId, cb) {
-                let url = `api/media?path=${boardId}/${mediaId}`;
+            getImageHTTP(boardId, image, cb) {
+                let url = `api/media?path=${boardId}/${image.id}`;
 
 
                 var xhr = new XMLHttpRequest();
@@ -186,8 +186,7 @@
                         }
                         var data = binaryString.join('');
 
-                        var base64 = window.btoa(data);
-
+                        var base64 = "data:" + image.type + ";base64," +  window.btoa(data);
                         cb(base64)
                     }
                 };
@@ -224,9 +223,7 @@
                         type: file.type,
                         originalName: file.name
                     };
-
                     this.fileStorage.saveMedia(path, imageData, meta, cb);
-
                 } else {
                     this.saveImageHTTP(boardId, mediaId, file, cb);
                 }

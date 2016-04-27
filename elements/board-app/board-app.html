@@ -140,17 +140,9 @@
                         data.images = [];
                     }
                     data.images.forEach(image => {
-                        this.$.storage.getImage(data.id, image.id, (resp) => {
-                            //  this._toDataUrl(xhr.response, (b64image) => {
-                            //      console.log("# image transformed : ", b64image);
-                            //      this.$.board.addMedia(image.id, "data:image/jpeg;base64," + b64image);
-                            //  })
-
+                        this.$.storage.getImage(data.id, image, (resp) => {
                             console.log("#image loaded : ", typeof(resp));
                             let content =  resp;
-                            if(resp.lastIndexOf(";base64,") === -1){
-                              //  content = "data:" + image.type + ";base64," + content;
-                            }
                             this.$.board.addMedia(image.id, content);
 
                         })
