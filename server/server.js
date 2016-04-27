@@ -61,9 +61,11 @@ exports.start = function (staticDir, internalPort, cb) {
 	app.get('/api/media', function (req, res) {
 		var path = req.query.path;
 		storage.loadMedia(path, (meta, data) => {
+			console.log("Media loaded : ", meta, data);
 			if (meta.err) {
 				return res.end(404);
 			}
+
 			// http://localhost:32102/api/media?path=76961778-f4b3-f11e-ad7a-daac0fbba1ce/1bab0f08-59e4-ea30-3112-15bdefc73cf1
 			res.writeHead(200, {
 				'Content-Type': meta.type
