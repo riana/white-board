@@ -142,7 +142,7 @@
                     data.images.forEach(image => {
                         this.$.storage.getImage(data.id, image, (resp) => {
                             console.log("#image loaded : ", typeof(resp));
-                            let content =  resp;
+                            let content = resp;
                             this.$.board.addMedia(image.id, content);
 
                         })
@@ -237,11 +237,10 @@
                         let imageTest = {
                             id: UUID.generate(),
                             type: file.type,
-                            position: position,
-                            dimension: {
-                                width: img.width,
-                                height: img.height,
-                            },
+                            x: position.x,
+                            y: position.y,
+                            width: img.width,
+                            height: img.height,
                             rotation: 0
                         };
 

@@ -167,6 +167,7 @@
                     }
 
                     self.updateGraph(self.data);
+
                     if (self.onDragItem) {
                         let coords = getScreenCoords(d3.event.x, d3.event.y, self.translate, self.scale);
                         self.onDragItem(coords,
@@ -197,7 +198,7 @@
                 });
             this.data = {}
 
-            this.setupImagesNodes();
+            this.setupControlLayer();
         }
 
         getDiagramCoords(x, y) {
@@ -372,106 +373,72 @@
             }
         }
 
-        //   addImageTest(imageData, position, dimension) {
-        //       let imageTest = {
-        //           data: imageData,
-        //           position: position,
-        //           dimension: dimension,
-        //           selected: false,
-        //           rotation: 0
-        //       };
-        //
-        //
-        //       this.data.images.push(imageTest);
-        //       this.updateImages(this.data);
-        //   }
+        setupControlLayer(){
+           let resizeDrag = d3.behavior.drag()
+               .on('dragstart', (d) => {
+                   //   if (this.imageTest.selected) {
+                   d3.event.sourceEvent.preventDefault();
+                   d3.event.sourceEvent.stopPropagation();
+                   //   }
+               })
+               .on('drag', (d) => {
+                   if (this.selectedImage) {
+                       // let dMove = (d3.event.dx * d3.event.dx) + (d3.event.dy * d3.event.dy);
+                       // let diagonal = (this.imageTest.width * this.imageTest.width) + (this.imageTest.height * this.imageTest.height);
+                       // let ratio = dMove / diagonal;
+                       this.selectedImage.width += d3.event.dx;
+                       this.selectedImage.height += d3.event.dy;
+                       this.updateImages(this.data);
+                       d3.event.sourceEvent.preventDefault();
+                       d3.event.sourceEvent.stopPropagation();
+                   }
+
+               });
+
+           let rotateDrag = d3.behavior.drag()
+               .on('dragstart', (e) => {
+                   //   if (this.imageTest.selected) {
+                   d3.event.sourceEvent.preventDefault();
+                   d3.event.sourceEvent.stopPropagation();
+                   //   }
+               })
+               .on('drag', (e) => {
+                   if (this.selectedImage) {
+                       let amount = d3.event.dx / 10;
+                       this.selectedImage.rotation -= amount;
+
+                       this.updateImages(this.data);
+                       d3.event.sourceEvent.preventDefault();
+                       d3.event.sourceEvent.stopPropagation();
+                   }
+
+               });
+
+           this.controlLayer = this.container.append("g");
+
+           this.controlLayer.append("svg:rect")
+               .attr("id", "imageRect")
+               .attr("fill", "none")
+               .attr("stroke", "#FF0000");
+
+           this.controlLayer.append("svg:circle")
+               .attr("id", "imageResize")
+               .attr("fill", "#EE0000")
+               .attr("stroke", "#FF0000")
+               .attr('r', 10)
+               .call(resizeDrag);
 
 
-        setupImagesNodes() {
-            this.imageDrag = d3.behavior.drag()
-                .on('dragstart', (d) => {
-                    //   if (this.imageTest.selected) {
-                    d3.event.sourceEvent.preventDefault();
-                    d3.event.sourceEvent.stopPropagation();
-                    //   }
-                })
-                .on('drag', (d) => {
-                    //   if (this.imageTest.selected) {
-                    d.position.x = d3.event.x - d.dimension.width / 2;
-                    d.position.y = d3.event.y - d.dimension.height / 2;
-                    this.updateImages(this.data);
-                    d3.event.sourceEvent.preventDefault();
-                    d3.event.sourceEvent.stopPropagation();
-                    //   }
+           this.controlLayer.append("svg:line")
+               .attr("id", "rotateLine")
+               .attr("stroke", "#FF0000");
 
-                });
-
-            let resizeDrag = d3.behavior.drag()
-                .on('dragstart', (d) => {
-                    //   if (this.imageTest.selected) {
-                    d3.event.sourceEvent.preventDefault();
-                    d3.event.sourceEvent.stopPropagation();
-                    //   }
-                })
-                .on('drag', (d) => {
-                    if (this.selectedImage) {
-                        // let dMove = (d3.event.dx * d3.event.dx) + (d3.event.dy * d3.event.dy);
-                        // let diagonal = (this.imageTest.dimension.width * this.imageTest.dimension.width) + (this.imageTest.dimension.height * this.imageTest.dimension.height);
-                        // let ratio = dMove / diagonal;
-                        this.selectedImage.dimension.width += d3.event.dx;
-                        this.selectedImage.dimension.height += d3.event.dy;
-                        this.updateImages(this.data);
-                        d3.event.sourceEvent.preventDefault();
-                        d3.event.sourceEvent.stopPropagation();
-                    }
-
-                });
-
-            let rotateDrag = d3.behavior.drag()
-                .on('dragstart', (e) => {
-                    //   if (this.imageTest.selected) {
-                    d3.event.sourceEvent.preventDefault();
-                    d3.event.sourceEvent.stopPropagation();
-                    //   }
-                })
-                .on('drag', (e) => {
-                    if (this.selectedImage) {
-                        let amount = d3.event.dx / 10;
-                        this.selectedImage.rotation -= amount;
-
-                        this.updateImages(this.data);
-                        d3.event.sourceEvent.preventDefault();
-                        d3.event.sourceEvent.stopPropagation();
-                    }
-
-                });
-
-            this.controlLayer = this.container.append("g");
-
-            this.controlLayer.append("svg:rect")
-                .attr("id", "imageRect")
-                .attr("fill", "none")
-                .attr("stroke", "#FF0000");
-
-            this.controlLayer.append("svg:circle")
-                .attr("id", "imageResize")
-                .attr("fill", "#EE0000")
-                .attr("stroke", "#FF0000")
-                .attr('r', 10)
-                .call(resizeDrag);
-
-
-            this.controlLayer.append("svg:line")
-                .attr("id", "rotateLine")
-                .attr("stroke", "#FF0000");
-
-            this.controlLayer.append("svg:circle")
-                .attr("id", "rotateCircle")
-                .attr("fill", "#EE0000")
-                .attr("stroke", "#FF0000")
-                .attr('r', 10)
-                .call(rotateDrag);
-
+           this.controlLayer.append("svg:circle")
+               .attr("id", "rotateCircle")
+               .attr("fill", "#EE0000")
+               .attr("stroke", "#FF0000")
+               .attr('r', 10)
+               .call(rotateDrag);
         }
 
         updateImages(data) {
@@ -481,7 +448,8 @@
             imageNodes.exit().remove();
             imageNodes.enter().append("svg:image")
                 .attr("class", "image-node")
-                .call(this.imageDrag)
+               //  .call(this.imageDrag)
+                .call(this.drag)
                 .on("click", (d) => {
                     if (this.selectedImage === d) {
                         this.selectedImage = null;
@@ -494,8 +462,8 @@
 
             function rotateTransform(d) {
                 if (d) {
-                    let rx = d.position.x + d.dimension.width / 2;
-                    let ry = d.position.y + d.dimension.height / 2;
+                    let rx = d.x + d.width / 2;
+                    let ry = d.y + d.height / 2;
                     let rotateTransform = "rotate(" + d.rotation + " " + rx + " " + ry + ")";
                     return rotateTransform;
                 }
@@ -508,39 +476,39 @@
 
             this.nodesLayer.selectAll('.image-node')
                 .attr("xlink:href", function(d) {
-                    if (self.medias && self.medias[d.id]) {
-                        console.log("media found");
-                    } else {
-                        console.log("media not found");
-                    }
+                  //   if (self.medias && self.medias[d.id]) {
+                  //       console.log("media found");
+                  //   } else {
+                  //       console.log("media not found");
+                  //   }
                     return self.medias ? self.medias[d.id] : null;
                 })
                 .attr('x', function(d) {
-                    return d.position.x;
+                    return d.x;
                 })
                 .attr('y', function(d) {
-                    return d.position.y;
+                    return d.y;
                 })
                 .attr("height", function(d) {
-                    return d.dimension.height;
+                    return d.height;
                 })
                 .attr("width", function(d) {
-                    return d.dimension.width;
+                    return d.width;
                 })
                 .attr("transform", rotateTransform);
 
             this.controlLayer.selectAll("#imageRect")
                 .attr("x", (d) => {
-                    return this.selectedImage ? this.selectedImage.position.x - 2 : 0;
+                    return this.selectedImage ? this.selectedImage.x - 2 : 0;
                 })
                 .attr("y", (d) => {
-                    return this.selectedImage ? this.selectedImage.position.y - 2 : 0;
+                    return this.selectedImage ? this.selectedImage.y - 2 : 0;
                 })
                 .attr("height", (d) => {
-                    return this.selectedImage ? this.selectedImage.dimension.height + 4 : 0;
+                    return this.selectedImage ? this.selectedImage.height + 4 : 0;
                 })
                 .attr("width", (d) => {
-                    return this.selectedImage ? this.selectedImage.dimension.width + 4 : 0;
+                    return this.selectedImage ? this.selectedImage.width + 4 : 0;
                 })
                 .attr("transform", rotateTransform);
 
@@ -553,15 +521,15 @@
 
             this.controlLayer.selectAll('#imageResize')
                 .attr('cx', (d) => {
-                    return this.selectedImage ? this.selectedImage.position.x + this.selectedImage.dimension.width + 4 : 0;
+                    return this.selectedImage ? this.selectedImage.x + this.selectedImage.width + 4 : 0;
                 })
                 .attr('cy', (d) => {
-                    return this.selectedImage ? this.selectedImage.position.y + this.selectedImage.dimension.height + 4 : 0;
+                    return this.selectedImage ? this.selectedImage.y + this.selectedImage.height + 4 : 0;
                 })
 
             let rotateHandleCenter = {
-                x: this.selectedImage ? this.selectedImage.position.x + this.selectedImage.dimension.width / 2 : 0,
-                y: this.selectedImage ? this.selectedImage.position.y + this.selectedImage.dimension.height : 0
+                x: this.selectedImage ? this.selectedImage.x + this.selectedImage.width / 2 : 0,
+                y: this.selectedImage ? this.selectedImage.y + this.selectedImage.height : 0
             }
 
             this.controlLayer.selectAll('#rotateLine')
