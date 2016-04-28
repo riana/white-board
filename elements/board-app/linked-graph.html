@@ -476,6 +476,7 @@
 
             this.nodesLayer.selectAll('.image-node')
                 .attr("xlink:href", function(d) {
+                   //FIXME Improve image fetching
                   //   if (self.medias && self.medias[d.id]) {
                   //       console.log("media found");
                   //   } else {
@@ -556,6 +557,13 @@
                 this.medias = [];
             }
             this.medias[id] = data;
+        }
+
+        removeMedia(media) {
+           if(this.selectedImage === media){
+             this.selectedImage = null;
+          }
+           delete this.medias[media.id];
         }
 
     }

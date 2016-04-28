@@ -195,8 +195,9 @@
                         this.data.nodes.splice(index, 1);
                         index = this.data.images.indexOf(item);
                         if(index != -1){
-                           // Delete image node
-                           console.log("Delete image node");
+                           this.data.images.splice(index, 1);
+                           this.linkedGraph.removeMedia(item);
+                           this.fire("media-removed", item);
                         }
 
                         let links = this.data.links.filter((link) => {

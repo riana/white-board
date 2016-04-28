@@ -160,9 +160,9 @@
             },
             getImage(boardId, image, cb) {
                 if (this.fileStorage) {
-                   this.fileStorage.loadMedia(`${boardId}/${image.id}`, (meta, data) => {
-                      cb(data);
-                   });
+                    this.fileStorage.loadMedia(`${boardId}/${image.id}`, (meta, data) => {
+                        cb(data);
+                    });
                 } else {
                     this.getImageHTTP(boardId, image, cb);
                 }
@@ -184,7 +184,7 @@
                         }
                         var data = binaryString.join('');
 
-                        var base64 = "data:" + image.type + ";base64," +  window.btoa(data);
+                        var base64 = "data:" + image.type + ";base64," + window.btoa(data);
                         cb(base64)
                     }
                 };
@@ -242,9 +242,31 @@
                     }
                     cb(response);
                 });
+            },
+            deleteImage(boardId, mediaId, cb) {
+               if (this.fileStorage) {
+                   let path = `${boardId}/${mediaId}`;
+                   this.fileStorage.deleteMedia(path,cb);
+               } else {
+                   this.deleteImageHttp(boardId, mediaId, cb);
+               }
+            },
+            deleteImageHttp(boardId, mediaId, cb) {
+                let url = 'api/media';
+                let params = {
+                    path: `${boardId}/${mediaId}`
+                };
+                let request = new HttpRequest("DELETE", url, params);
+                //  request.headers = {
+                //      authorization: "Bearer " + token
+                //  };
+                request.send((response) => {
+                    if (response._error) {
+                        //TODO handle error
+                    }
+                    cb(response);
+                });
             }
-
-            // TODO delete image
 
         });
     </script>

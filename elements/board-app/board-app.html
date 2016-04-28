@@ -67,7 +67,7 @@
                     </paper-material>
                 </template>
             </div>
-            <board-surface id="board" class="flex" data="{{boardContent}}" on-drop="_handleDrop"></board-surface>
+            <board-surface id="board" class="flex" data="{{boardContent}}" on-drop="_handleDrop" on-media-removed="_mediaRemoved"></board-surface>
         </div>
         <backdrop-view id="loadDialog">
             <board-selector boards="[[boardsIndex]]" on-load="_loadBoard" on-delete="_delete"></board-selector>
@@ -165,6 +165,14 @@
                 this.$.storage.load(e.detail.id);
                 this.$.loadDialog.close();
             },
+            _mediaRemoved(e) {
+               let imageItem = e.detail;
+               this.$.storage.deleteImage(this.boardContent.id, imageItem.id, (status)=>{
+                  if(!status){
+                     this._save();
+                  }
+               });
+            },
             _createBoard() {
                 this.boardContent = {
                     id: UUID.generate(),
@@ -218,7 +226,6 @@
             _insertImage() {
                 console.log("_insertImage");
             },
-
             _handleDrop(e) {
                 e.preventDefault();
                 var file = e.dataTransfer.files[0],
@@ -249,6 +256,7 @@
                             this.$.board.addMedia(imageTest.id, imageData);
                             this.boardContent.images.push(imageTest);
                             this.$.board._dataUpdated();
+                            this._save();
                         }, imageData);
                     };
                     img.src = imageData;
