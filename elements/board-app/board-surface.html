@@ -104,7 +104,7 @@
             }
         </style>
 
-        <div id="d3Board" >
+        <div id="d3Board">
             <div id="trash">
                 <iron-icon id="trashIcon" icon="delete"></iron-icon>
             </div>
@@ -148,10 +148,10 @@
             },
             attached() {
 
-               //  this.$.d3Board.ondragover = (e) => {
-               //      this._dragOver(e)
-               //      return false;
-               //  };
+                //  this.$.d3Board.ondragover = (e) => {
+                //      this._dragOver(e)
+                //      return false;
+                //  };
 
                 this.linkedGraph = new LinkedGraph("#d3Board");
                 this.linkedGraph.pencilFilter = false;
@@ -193,6 +193,11 @@
                     if (this.isOverTrash(pos)) {
                         let index = this.data.nodes.indexOf(item);
                         this.data.nodes.splice(index, 1);
+                        index = this.data.images.indexOf(item);
+                        if(index != -1){
+                           // Delete image node
+                           console.log("Delete image node");
+                        }
 
                         let links = this.data.links.filter((link) => {
                             return link.source === item.id || link.target === item.id;
@@ -312,8 +317,8 @@
                 return overTrash;
             },
 
-            addMedia(id, data){
-               this.linkedGraph.addMedia(id, data);
+            addMedia(id, data) {
+                this.linkedGraph.addMedia(id, data);
             }
 
         });

@@ -169,8 +169,6 @@
             },
             getImageHTTP(boardId, image, cb) {
                 let url = `api/media?path=${boardId}/${image.id}`;
-
-
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', url, true);
 
@@ -240,11 +238,13 @@
                 //  };
                 request.upload(file, (response) => {
                     if (response._error) {
-                        //TODO : handle error
+                        //TODO handle error
                     }
                     cb(response);
                 });
             }
+
+            // TODO delete image
 
         });
     </script>
