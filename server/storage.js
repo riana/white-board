@@ -99,9 +99,25 @@ exports.loadMedia = function (path, cb) {
 				} else {
 					cb(meta, data);
 				}
-			})
+			});
 		}
-
 	});
 
+};
+
+exports.deleteMedia = function (path, cb) {
+	var targetPath = mediaDir + path;
+	fs.unlink(targetPath + '.json', function (err) {
+		var success = true;
+		if (err) {
+			success = false;
+		}
+		fs.unlink(targetPath, function (err) {
+			if (!err && success) {
+				cb();
+			} else {
+				cb(err);
+			}
+		});
+	});
 };

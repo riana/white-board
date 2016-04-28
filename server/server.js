@@ -101,6 +101,13 @@ exports.start = function (staticDir, internalPort, cb) {
 		});
 	});
 
+	app.delete('/api/media', function (req, res) {
+		var path = req.query.path;
+		storage.deleteMedia(path, (err) => {
+			res.end();
+		});
+	});
+
 	app.listen(internalPort, function () {
 		console.log('Internal server running @' + internalPort);
 		if (cb) {
