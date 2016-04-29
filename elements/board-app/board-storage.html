@@ -164,7 +164,8 @@
                         cb(data);
                     });
                 } else {
-                    this.getImageHTTP(boardId, image, cb);
+                    let url = `/api/media?path=${boardId}/${image.id}`;
+                    cb(url);
                 }
             },
             getImageHTTP(boardId, image, cb) {
