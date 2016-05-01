@@ -50,7 +50,7 @@
             }
         </style>
 
-        <board-storage id="storage" on-loaded="_loaded" board-index="{{boardsIndex}}"></board-storage>
+        <board-storage id="storage" on-loaded="_loaded" on-storage-ready="_storageReady" board-index="{{boardsIndex}}"></board-storage>
 
         <board-toolbar title="{{boardContent.title}}" on-save="_save" on-open="_open" on-create="_createBoard"></board-toolbar>
         <div class="layout horizontal flex">
@@ -266,6 +266,9 @@
             },
             _dragOver(e) {
                 return false;
+            },
+            _storageReady(){
+               
             }
         });
     </script>

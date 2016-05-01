@@ -1,11 +1,15 @@
+//jshint esversion:6
+
 var os = require('os');
 var fs = require("fs");
 var mkdirp = require('mkdirp');
+var Datastore = require('nedb');
 var getDirName = require('path').dirname;
 console.log('user home dir : ' + os.homedir());
 
 var storageDir = os.homedir() + "/.whiteboard-app/data/";
 var mediaDir = os.homedir() + "/.whiteboard-app/media/";
+
 function writeFile(path, contents, cb) {
 	mkdirp(getDirName(path), function (err) {
 		if (err) return cb(err);
@@ -14,16 +18,24 @@ function writeFile(path, contents, cb) {
 	});
 }
 
-exports.enableDebug = function () {
-	storageDir = "./.whiteboard-app/data/";
-	mediaDir = "./.whiteboard-app/media/";
+exports.open = function (cb, debug) {
+	if (debug) {
+		storageDir = "./.whiteboard-app/data/";
+		mediaDir = "./.whiteboard-app/media/";
+	}
+
+	var db = new Datastore({
+		filename: storageDir + '/data.db'
+	});
+	db.loadDatabase(function (err) { // Callback is optional
+		cb();
+	});
 };
 
 
 exports.load = function (path, cb) {
-	console.log("Load from electron");
 	var filename = storageDir + path + ".json";
-	console.log("loading : ", filename);
+	// console.log("loading : ", filename);
 	fs.readFile(filename, 'utf8', function (err, data) {
 		if (err && err.code === "ENOENT") {
 			cb(JSON.stringify({
@@ -37,7 +49,6 @@ exports.load = function (path, cb) {
 };
 
 exports.save = function (path, data, cb) {
-	console.log("Save from electron");
 	var outputFilename = storageDir + path + ".json";
 	writeFile(outputFilename, JSON.stringify(data, null, 4), function (err) {
 		if (err) {
@@ -51,7 +62,6 @@ exports.save = function (path, data, cb) {
 
 exports.delete = function (path, cb) {
 	var filename = storageDir + path + ".json";
-	console.log("Delete from electron : ", filename);
 	fs.unlink(filename, function (err) {
 		if (err) {
 			cb(err);

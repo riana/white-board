@@ -1,3 +1,5 @@
+//jshint esversion:6
+
 var storage = require('./storage.js');
 var mkdirp = require('mkdirp');
 var fs = require("fs");
@@ -10,11 +12,7 @@ mkdirp(tmpUpload, function (err) {
 	console.log("temporary upload dir created");
 });
 
-exports.enableDebug = function () {
-	storage.enableDebug();
-};
-
-exports.start = function (staticDir, internalPort, cb) {
+exports.start = function (staticDir, internalPort, cb, debug) {
 	var express = require('express');
 	var bodyParser = require('body-parser');
 	var multer = require('multer');
@@ -61,7 +59,7 @@ exports.start = function (staticDir, internalPort, cb) {
 	app.get('/api/media', function (req, res) {
 		var path = req.query.path;
 		storage.loadMedia(path, (meta, data) => {
-			console.log("Media loaded : ", meta, data);
+			// console.log("Media loaded : ", meta, data);
 			if (meta.err) {
 				return res.end(404);
 			}
@@ -90,7 +88,6 @@ exports.start = function (staticDir, internalPort, cb) {
 			// console.log("save media type of : ", typeof(data));
 			storage.saveMedia(targetPath, data, meta, (err) => {
 				fs.unlink(tmpFile, function (err) {
-					console.log("# done");
 					if (err) {
 						return res.end(500);
 					}
@@ -108,10 +105,12 @@ exports.start = function (staticDir, internalPort, cb) {
 		});
 	});
 
-	app.listen(internalPort, function () {
-		console.log('Internal server running @' + internalPort);
-		if (cb) {
-			cb();
-		}
-	});
+	storage.open(()=> {
+		app.listen(internalPort, function () {
+			console.log('Internal server running @' + internalPort);
+			if (cb) {
+				cb();
+			}
+		});
+	}, debug);
 };

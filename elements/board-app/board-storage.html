@@ -39,9 +39,17 @@
             ready() {
                 if (typeof require === "function") {
                     this.fileStorage = require("./server/storage.js");
+                    this.fileStorage.open(()=> {
+                       this.initialize();
+                    });
+                }else {
+                   this.initialize();
                 }
-                this.startUp = true;
-                this.loadBoardsIndex();
+            },
+            initialize(){
+               this.startUp = true;
+               this.loadBoardsIndex();
+               this.fire('storage-ready');
             },
             loadBoardsIndex() {
                 if (this.fileStorage) {
