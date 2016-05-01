@@ -10,6 +10,8 @@ console.log('user home dir : ' + os.homedir());
 var storageDir = os.homedir() + "/.whiteboard-app/data/";
 var mediaDir = os.homedir() + "/.whiteboard-app/media/";
 
+var mediaLibraryIndex = null;
+
 function writeFile(path, contents, cb) {
 	mkdirp(getDirName(path), function (err) {
 		if (err) return cb(err);
@@ -24,10 +26,15 @@ exports.open = function (cb, debug) {
 		mediaDir = "./.whiteboard-app/media/";
 	}
 
-	var db = new Datastore({
-		filename: storageDir + '/data.db'
+	mediaLibraryIndex = new Datastore({
+		filename: storageDir + '/media-library.db'
 	});
-	db.loadDatabase(function (err) { // Callback is optional
+	mediaLibraryIndex.loadDatabase(function (err) {
+		mediaLibraryIndex.find({
+			type: /image/
+		}, function (err, docs) {
+			console.log("Media library content : ", docs);
+		});
 		cb();
 	});
 };
@@ -84,6 +91,10 @@ exports.saveMedia = function (targetPath, data, meta, cb) {
 					if (err) {
 						return cb(err);
 					}
+					// TODO : remove systematic addToMediaLibrary
+					exports.addToMediaLibrary(meta, targetPath, () => {
+
+					});
 					cb();
 				});
 			}
@@ -128,6 +139,33 @@ exports.deleteMedia = function (path, cb) {
 			} else {
 				cb(err);
 			}
+		});
+	});
+};
+
+generateUUID = function () {
+	function s4() {
+		return Math.floor((1 + Math.random()) * 0x10000)
+			.toString(16)
+			.substring(1);
+	}
+	return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+		s4() + '-' + s4() + s4() + s4();
+};
+
+exports.addToMediaLibrary = function (meta, path, cb) {
+	var id = generateUUID();
+	var targetPath = mediaDir + 'library/' + id;
+	meta.id = id;
+	meta.insertionDate = (new Date()).now;
+	mediaLibraryIndex.insert(meta, () => {
+		fs.readFile(path, function (err, data) {
+			writeFile(targetPath, data, function (err) {
+				if (err) {
+					return cb(err);
+				}
+				cb();
+			});
 		});
 	});
 };
