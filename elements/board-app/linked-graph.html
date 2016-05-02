@@ -349,7 +349,16 @@
 
         setData(data) {
 
-            this.applyZoom(data);
+
+            if (data.view) {
+                let defaultView = {
+                    translate: [0, 0],
+                    zoom: 1
+                }
+                this.applyZoom(defaultView);
+                this.animateViewport(data.view);
+            }
+
             this.updateGraph(data);
             this.updateImages(data);
         }
@@ -361,84 +370,90 @@
             this.updateImages(data);
         }
 
-        applyZoom(data) {
-            if (data.view) {
-                if (!isNaN(data.view.scale) && !isNaN(data.view.translate[0]) && !isNaN(data.view.translate[1])) {
-                    this.scale = data.view.scale;
-                    this.translate = data.view.translate;
-                    this.zoom.translate(data.view.translate);
-                    this.zoom.scale(data.view.scale);
-                    this.container.attr("transform", "translate(" + data.view.translate + ")scale(" + data.view.scale + ")");
-                }
+        animateViewport(view) {
+            if (!isNaN(view.scale) && !isNaN(view.translate[0]) && !isNaN(view.translate[1])) {
+                this.svg.transition()
+                    .duration(1000)
+                    .call(this.zoom.translate(view.translate).scale(view.scale).event);
             }
         }
 
-        setupControlLayer(){
-           let resizeDrag = d3.behavior.drag()
-               .on('dragstart', (d) => {
-                   //   if (this.imageTest.selected) {
-                   d3.event.sourceEvent.preventDefault();
-                   d3.event.sourceEvent.stopPropagation();
-                   //   }
-               })
-               .on('drag', (d) => {
-                   if (this.selectedImage) {
-                       // let dMove = (d3.event.dx * d3.event.dx) + (d3.event.dy * d3.event.dy);
-                       // let diagonal = (this.imageTest.width * this.imageTest.width) + (this.imageTest.height * this.imageTest.height);
-                       // let ratio = dMove / diagonal;
-                       this.selectedImage.width += d3.event.dx;
-                       this.selectedImage.height += d3.event.dy;
-                       this.updateImages(this.data);
-                       d3.event.sourceEvent.preventDefault();
-                       d3.event.sourceEvent.stopPropagation();
-                   }
+        applyZoom(view) {
+            if (!isNaN(view.scale) && !isNaN(view.translate[0]) && !isNaN(view.translate[1])) {
+                this.scale = view.scale;
+                this.translate = view.translate;
+                this.zoom.translate(view.translate);
+                this.zoom.scale(view.scale);
+                this.container.attr("transform", "translate(" + view.translate + ")scale(" + view.scale + ")");
+            }
+        }
 
-               });
+        setupControlLayer() {
+            let resizeDrag = d3.behavior.drag()
+                .on('dragstart', (d) => {
+                    //   if (this.imageTest.selected) {
+                    d3.event.sourceEvent.preventDefault();
+                    d3.event.sourceEvent.stopPropagation();
+                    //   }
+                })
+                .on('drag', (d) => {
+                    if (this.selectedImage) {
+                        // let dMove = (d3.event.dx * d3.event.dx) + (d3.event.dy * d3.event.dy);
+                        // let diagonal = (this.imageTest.width * this.imageTest.width) + (this.imageTest.height * this.imageTest.height);
+                        // let ratio = dMove / diagonal;
+                        this.selectedImage.width += d3.event.dx;
+                        this.selectedImage.height += d3.event.dy;
+                        this.updateImages(this.data);
+                        d3.event.sourceEvent.preventDefault();
+                        d3.event.sourceEvent.stopPropagation();
+                    }
 
-           let rotateDrag = d3.behavior.drag()
-               .on('dragstart', (e) => {
-                   //   if (this.imageTest.selected) {
-                   d3.event.sourceEvent.preventDefault();
-                   d3.event.sourceEvent.stopPropagation();
-                   //   }
-               })
-               .on('drag', (e) => {
-                   if (this.selectedImage) {
-                       let amount = d3.event.dx / 10;
-                       this.selectedImage.rotation -= amount;
+                });
 
-                       this.updateImages(this.data);
-                       d3.event.sourceEvent.preventDefault();
-                       d3.event.sourceEvent.stopPropagation();
-                   }
+            let rotateDrag = d3.behavior.drag()
+                .on('dragstart', (e) => {
+                    //   if (this.imageTest.selected) {
+                    d3.event.sourceEvent.preventDefault();
+                    d3.event.sourceEvent.stopPropagation();
+                    //   }
+                })
+                .on('drag', (e) => {
+                    if (this.selectedImage) {
+                        let amount = d3.event.dx / 10;
+                        this.selectedImage.rotation -= amount;
 
-               });
+                        this.updateImages(this.data);
+                        d3.event.sourceEvent.preventDefault();
+                        d3.event.sourceEvent.stopPropagation();
+                    }
 
-           this.controlLayer = this.container.append("g");
+                });
 
-           this.controlLayer.append("svg:rect")
-               .attr("id", "imageRect")
-               .attr("fill", "none")
-               .attr("stroke", "#FF0000");
+            this.controlLayer = this.container.append("g");
 
-           this.controlLayer.append("svg:circle")
-               .attr("id", "imageResize")
-               .attr("fill", "#EE0000")
-               .attr("stroke", "#FF0000")
-               .attr('r', 10)
-               .call(resizeDrag);
+            this.controlLayer.append("svg:rect")
+                .attr("id", "imageRect")
+                .attr("fill", "none")
+                .attr("stroke", "#FF0000");
+
+            this.controlLayer.append("svg:circle")
+                .attr("id", "imageResize")
+                .attr("fill", "#EE0000")
+                .attr("stroke", "#FF0000")
+                .attr('r', 10)
+                .call(resizeDrag);
 
 
-           this.controlLayer.append("svg:line")
-               .attr("id", "rotateLine")
-               .attr("stroke", "#FF0000");
+            this.controlLayer.append("svg:line")
+                .attr("id", "rotateLine")
+                .attr("stroke", "#FF0000");
 
-           this.controlLayer.append("svg:circle")
-               .attr("id", "rotateCircle")
-               .attr("fill", "#EE0000")
-               .attr("stroke", "#FF0000")
-               .attr('r', 10)
-               .call(rotateDrag);
+            this.controlLayer.append("svg:circle")
+                .attr("id", "rotateCircle")
+                .attr("fill", "#EE0000")
+                .attr("stroke", "#FF0000")
+                .attr('r', 10)
+                .call(rotateDrag);
         }
 
         updateImages(data) {
@@ -448,7 +463,7 @@
             imageNodes.exit().remove();
             imageNodes.enter().append("svg:image")
                 .attr("class", "image-node")
-               //  .call(this.imageDrag)
+                //  .call(this.imageDrag)
                 .call(this.drag)
                 .on("click", (d) => {
                     if (this.selectedImage === d) {
@@ -476,12 +491,12 @@
 
             this.nodesLayer.selectAll('.image-node')
                 .attr("xlink:href", function(d) {
-                   //FIXME Improve image fetching
-                  //   if (self.medias && self.medias[d.id]) {
-                  //       console.log("media found");
-                  //   } else {
-                  //       console.log("media not found");
-                  //   }
+                    //FIXME Improve image fetching
+                    //   if (self.medias && self.medias[d.id]) {
+                    //       console.log("media found");
+                    //   } else {
+                    //       console.log("media not found");
+                    //   }
                     return self.medias ? self.medias[d.id] : null;
                 })
                 .attr('x', function(d) {
@@ -560,11 +575,13 @@
         }
 
         removeMedia(media) {
-           if(this.selectedImage === media){
-             this.selectedImage = null;
-          }
-           delete this.medias[media.id];
+            if (this.selectedImage === media) {
+                this.selectedImage = null;
+            }
+            delete this.medias[media.id];
         }
+
+
 
     }
 </script>
