@@ -102,8 +102,15 @@
                 font-weight: lighter;
                 max-width: 500px;
             }
+
+            #canvasBoard{
+               position: absolute;
+               visibility: hidden;
+            }
         </style>
 
+        <canvas id="canvasBoard" style="border:2px solid black;" width="1280" height="720">
+        </canvas>
         <div id="d3Board">
             <div id="trash">
                 <iron-icon id="trashIcon" icon="delete"></iron-icon>
@@ -320,6 +327,10 @@
 
             addMedia(id, data) {
                 this.linkedGraph.addMedia(id, data);
+            },
+
+            animateViewport(view){
+               this.linkedGraph.animateViewport(view);
             }
 
         });

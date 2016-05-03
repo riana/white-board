@@ -13,6 +13,7 @@
 <link rel="import" href="./board-toolbar.html">
 <link rel="import" href="./board-surface.html">
 <link rel="import" href="./board-selector.html">
+<link rel="import" href="./viewport-list.html">
 <link rel="import" href="./UUID.html">
 
 <link rel="import" href="../fa-button/fa-button.html">
@@ -52,7 +53,7 @@
 
         <board-storage id="storage" on-loaded="_loaded" on-storage-ready="_storageReady" board-index="{{boardsIndex}}"></board-storage>
 
-        <board-toolbar title="{{boardContent.title}}" on-save="_save" on-open="_open" on-create="_createBoard"></board-toolbar>
+        <board-toolbar title="{{boardContent.title}}" on-save="_save" on-open="_open" on-create="_createBoard" on-viewport-list="_toggleViewportList"></board-toolbar>
         <div class="layout horizontal flex">
             <div id="controlBar" class="layout vertical center">
                 <div class="controls-container">
@@ -68,6 +69,7 @@
                 </template>
             </div>
             <board-surface id="board" class="flex" data="{{boardContent}}" on-drop="_handleDrop" on-media-removed="_mediaRemoved"></board-surface>
+            <viewport-list id="viewportList" board-content="{{boardContent}}" on-restore-viewport="_restoreViewport"></viewport-list>
         </div>
         <backdrop-view id="loadDialog">
             <board-selector boards="[[boardsIndex]]" on-load="_loadBoard" on-delete="_delete"></board-selector>
@@ -268,7 +270,13 @@
                 return false;
             },
             _storageReady(){
-               
+
+            },
+            _toggleViewportList(){
+
+            },
+            _restoreViewport(e) {
+               this.$.board.animateViewport(e.detail);
             }
         });
     </script>

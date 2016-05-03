@@ -99,6 +99,7 @@
                 .on("zoom", zoomed);
 
             this.svg = d3.select(elSelector).append("svg")
+            .attr("id", "SVGBoard")
                 .attr("width", width)
                 .attr("height", height)
                 .call(this.zoom)
@@ -463,7 +464,6 @@
             imageNodes.exit().remove();
             imageNodes.enter().append("svg:image")
                 .attr("class", "image-node")
-                //  .call(this.imageDrag)
                 .call(this.drag)
                 .on("click", (d) => {
                     if (this.selectedImage === d) {

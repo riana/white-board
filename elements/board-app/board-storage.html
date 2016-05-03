@@ -39,17 +39,17 @@
             ready() {
                 if (typeof require === "function") {
                     this.fileStorage = require("./server/storage.js");
-                    this.fileStorage.open(()=> {
-                       this.initialize();
+                    this.fileStorage.open(() => {
+                        this.initialize();
                     });
-                }else {
-                   this.initialize();
+                } else {
+                    this.initialize();
                 }
             },
-            initialize(){
-               this.startUp = true;
-               this.loadBoardsIndex();
-               this.fire('storage-ready');
+            initialize() {
+                this.startUp = true;
+                this.loadBoardsIndex();
+                this.fire('storage-ready');
             },
             loadBoardsIndex() {
                 if (this.fileStorage) {
@@ -119,7 +119,12 @@
                 console.log(e);
             },
             save(data) {
-                this._electSave('boards/' + data.id, data);
+               let savedData = JSON.parse(JSON.stringify(data));
+               delete savedData.viewports;
+               // savedData.viewports.forEach(viewport => {
+                  //TODO save viewport to media
+               // });
+                this._electSave('boards/' + data.id, savedData);
                 this.updateIndex(data);
             },
             _deleted() {
@@ -173,7 +178,8 @@
                     });
                 } else {
                     let url = `/api/media?path=${boardId}/${image.id}`;
-                    cb(url);
+                    this.getImageHTTP(boardId, image, cb);
+                  //   cb(url);
                 }
             },
             getImageHTTP(boardId, image, cb) {
@@ -253,12 +259,12 @@
                 });
             },
             deleteImage(boardId, mediaId, cb) {
-               if (this.fileStorage) {
-                   let path = `${boardId}/${mediaId}`;
-                   this.fileStorage.deleteMedia(path,cb);
-               } else {
-                   this.deleteImageHttp(boardId, mediaId, cb);
-               }
+                if (this.fileStorage) {
+                    let path = `${boardId}/${mediaId}`;
+                    this.fileStorage.deleteMedia(path, cb);
+                } else {
+                    this.deleteImageHttp(boardId, mediaId, cb);
+                }
             },
             deleteImageHttp(boardId, mediaId, cb) {
                 let url = 'api/media';
