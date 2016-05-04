@@ -2,6 +2,9 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-image/iron-image.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/image-icons.html">
 <!--Imports go here-->
 
 <dom-module id="viewport-list">
@@ -10,26 +13,76 @@
         <style is="custom-style" include="iron-flex iron-flex-alignment">
             :host {
                 display: block;
-                background: var(--paper-grey-300);
+                background: var(--paper-grey-700);
+                color: var(--paper-grey-50);
+                width: 272px;
+                @apply(--layout-relative);
+            }
+
+            .viewport-container {
+                position: relative;
+                margin: 8px;
+                background: var(--paper-grey-200);
             }
 
             iron-image {
-                width: 128px;
-                height: 72px;
-                margin: 8px;
+                width: 256px;
+                height: 144px;
                 background: white;
+            }
+
+            .scrollable-container {
+                overflow: auto;
+            }
+
+            .viewport-title {
+                margin-left: 8px;
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+                --paper-input-container-underline-disabled: {
+                    display: none;
+                }
+            }
+
+            .action-button {
+               color: var(--paper-grey-400);
+            }
+
+            .title {
+               font-family: "Roboto";
+               margin-left: 8px;
+               color: var(--paper-grey-50);
+            }
+
+            .header {
+               color: var(--paper-blue-500);
             }
         </style>
 
-        <div class="layout horizontal center">
-            <paper-button on-tap="_addViewport">Add Viewport</paper-button>
-        </div>
-        <template is="dom-repeat" items="[[boardContent.viewports]]" as="viewport">
-            <div on-tap="_restoreViewport" class="layout vertical center">
-                <iron-image src="[[viewport.screenShot]]" sizing="contain"></iron-image>
+        <div class="layout vertical fit">
+            <div class="header layout horizontal center">
+               <div class="title">Viewports</div>
+               <div class="flex"></div>
+               <paper-icon-button icon="add" on-tap="_addViewport"></paper-icon-button>
             </div>
-        </template>
-
+            <div class="flex scrollable-container">
+                <template is="dom-repeat" items="[[boardContent.viewports]]" as="viewport">
+                    <paper-material class="viewport-container layout vertical">
+                        <iron-image src="[[viewport.screenShot]]" sizing="contain" on-tap="_restoreViewport"></iron-image>
+                        <div class="layout horizontal center">
+                            <paper-input class="viewport-title" label="Viewport" no-label-float no-underline value="{{viewport.label}}"></paper-input>
+                            <div class="flex"></div>
+                            <paper-icon-button class="action-button" icon="image:adjust" on-tap="_updateToCurrentViewport"></paper-icon-button>
+                            <paper-icon-button class="action-button" icon="delete" on-tap="_delete"></paper-icon-button>
+                        </div>
+                    </paper-material>
+                </template>
+            </div>
+        </div>
     </template>
 
     <script>
@@ -44,14 +97,13 @@
             },
             _boardContentChanged(newValue) {
                 if (!newValue.viewports) {
-                    // newValue.viewports = [];
                     this.set("boardContent.viewports", []);
                 }
 
             },
             _addViewport() {
                 let newViewport = JSON.parse(JSON.stringify(this.boardContent.view));
-                this.getHtmlContent(screenShot => {
+                this.getScreenshot(screenShot => {
                     newViewport.screenShot = screenShot;
                     this.push("boardContent.viewports", newViewport);
                 });
@@ -61,7 +113,7 @@
             _restoreViewport(e) {
                 this.fire("restore-viewport", e.model.viewport)
             },
-            getHtmlContent(cb) {
+            getScreenshot(cb) {
                 let svg = document.getElementById("SVGBoard");
                 let serializer = new XMLSerializer();
                 let str = serializer.serializeToString(svg);
@@ -84,39 +136,20 @@
                 image.src = 'data:image/svg+xml;base64,' + encodedData;
 
             },
+            _delete(e) {
+                let index = e.model.index;
+                this.splice("boardContent.viewports", index, 1);
+            },
+            _updateToCurrentViewport(e) {
+                let current = e.model.viewport;
+                let index = this.boardContent.viewports.indexOf(current);
 
-            testImage(cb) {
-                let svg = document.getElementById("SVGBoard");
-                let serializer = new XMLSerializer();
-                let str = serializer.serializeToString(svg);
-                console.log(str);
+                let newViewport = JSON.parse(JSON.stringify(this.boardContent.view));
 
-                var canvas = document.getElementById('canvasBoard');
-                var ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                var data = str;
-
-
-
-                var DOMURL = window.URL || window.webkitURL || window;
-
-                var img = new Image();
-
-
-
-                var svgData = new Blob([data], {
-                    type: 'image/svg+xml;charset=utf-8'
+                this.getScreenshot(screenShot => {
+                    newViewport.screenShot = screenShot;
+                    this.set("boardContent.viewports." + index, newViewport);
                 });
-                var url = DOMURL.createObjectURL(svgData);
-
-                img.onload = function() {
-                    img.setAttribute('crossOrigin', 'Anonymous');
-                    ctx.drawImage(img, 0, 0);
-                    DOMURL.revokeObjectURL(url);
-                    let screenShot = canvas.toDataURL();
-                    cb(screenShot);
-                }
-                img.src = url;
             }
         });
     </script>
