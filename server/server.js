@@ -44,8 +44,6 @@ exports.start = function (staticDir, internalPort, cb, debug) {
 		storage.save(id, data, () => {
 			res.end();
 		});
-		// console.log(req.query);
-
 	});
 
 	app.delete('/api/delete', function (req, res) {
@@ -55,6 +53,8 @@ exports.start = function (staticDir, internalPort, cb, debug) {
 			res.end();
 		});
 	});
+
+
 
 	app.get('/api/media', function (req, res) {
 		var path = req.query.path;
@@ -69,6 +69,26 @@ exports.start = function (staticDir, internalPort, cb, debug) {
 				'Content-Type': meta.type
 			});
 			res.end(data);
+		});
+	});
+
+	app.post('/api/library', upload.single('file'), function (req, res) {
+
+		var tmpFile = req.file.path;
+
+		var meta = {
+			type: req.file.mimetype,
+			originalName: req.file.originalname
+		};
+
+		storage.addToMediaLibrary(meta, tmpFile, () => {
+			fs.unlink(tmpFile, function (err) {
+				if (err) {
+					return res.end(500);
+				}
+				return res.end();
+
+			});
 		});
 	});
 

@@ -91,10 +91,6 @@ exports.saveMedia = function (targetPath, data, meta, cb) {
 					if (err) {
 						return cb(err);
 					}
-					// TODO : remove systematic addToMediaLibrary
-					exports.addToMediaLibrary(meta, targetPath, () => {
-
-					});
 					cb();
 				});
 			}
