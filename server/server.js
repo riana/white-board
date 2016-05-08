@@ -72,6 +72,15 @@ exports.start = function (staticDir, internalPort, cb, debug) {
 		});
 	});
 
+	app.get('/api/library', function (req, res) {
+		storage.getMediaLibraryContent(/image/, (err, data) => {
+			if (err) {
+				return res.end(500);
+			}
+			return res.end(JSON.stringify(data));
+		});
+	});
+
 	app.post('/api/library', upload.single('file'), function (req, res) {
 
 		var tmpFile = req.file.path;
@@ -87,8 +96,17 @@ exports.start = function (staticDir, internalPort, cb, debug) {
 					return res.end(500);
 				}
 				return res.end();
-
 			});
+		});
+	});
+
+	app.delete('/api/library', function (req, res) {
+		var id = req.query.id;
+		storage.deleteFromLibrary(id, (err, removed) => {
+			if (err) {
+				return res.end(500);
+			}
+			return res.end();
 		});
 	});
 

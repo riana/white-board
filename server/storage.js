@@ -30,11 +30,7 @@ exports.open = function (cb, debug) {
 		filename: storageDir + '/media-library.db'
 	});
 	mediaLibraryIndex.loadDatabase(function (err) {
-		mediaLibraryIndex.find({
-			type: /image/
-		}, function (err, docs) {
-			console.log("Media library content : ", docs);
-		});
+		console.log("Media library loaded");
 		cb();
 	});
 };
@@ -163,5 +159,33 @@ exports.addToMediaLibrary = function (meta, path, cb) {
 				cb();
 			});
 		});
+	});
+};
+
+exports.getMediaLibraryContent = function (regexp, cb) {
+	mediaLibraryIndex.find({
+		type: regexp
+	}, function (err, docs) {
+		cb(err, docs);
+	});
+};
+
+exports.deleteFromLibrary = function (id, cb) {
+	var targetPath = mediaDir + 'library/' + id;
+	fs.access(targetPath, fs.W_OK, (err) => {
+		if(!err){
+			fs.unlink(targetPath, function (err) {
+				if (err) {
+					// TODO Handle error
+				}
+				// TODO Handle success
+			});
+		}
+	});
+
+	mediaLibraryIndex.remove({
+		id: id
+	}, {}, function (err, numRemoved) {
+		cb(err, numRemoved);
 	});
 };
