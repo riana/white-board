@@ -40,6 +40,10 @@
             fa-button {
                 color: var(--paper-grey-100);
             }
+
+            .mode-button.enabled {
+                color: var(--paper-blue-500);
+            }
         </style>
 
         <board-storage id="storage" on-loaded="_loaded" on-storage-ready="_storageReady" board-index="{{boardsIndex}}"></board-storage>
@@ -47,8 +51,9 @@
         <board-toolbar title="{{boardContent.title}}" on-save="_save" on-open="_open" on-create="_createBoard" on-viewport-list="_toggleViewportList"></board-toolbar>
         <div class="layout horizontal flex">
             <div id="controlBar" class="layout vertical center">
+
                 <div class="controls-container">
-                    <fa-button icon="fa-mouse-pointer"></fa-button>
+                    <fa-button class$="mode-button [[_isEnabledStyle(currentMode, 'DRAW_RECT')]]" icon="fa-mouse-pointer" on-tap="_toggleDrawRectMode"></fa-button>
                     <fa-button icon="fa-image" on-tap="_insertImage"></fa-button>
                 </div>
 
@@ -116,6 +121,10 @@
                         color: "#FFFFFF",
                         background: "#EF6C00"
                     }]
+                },
+                currentMode: {
+                    type: String,
+                    value: 'IDLE'
                 }
             },
             attached() {
@@ -125,6 +134,10 @@
                     return false;
                 };
                 this._createBoard();
+
+                this.$.board.linkedGraph.onStateChanged = (state) => {
+                   this.currentMode = state;
+                }
             },
             _loaded(e) {
                 let data = e.detail;
@@ -159,12 +172,12 @@
                 this.$.loadDialog.close();
             },
             _mediaRemoved(e) {
-               let imageItem = e.detail;
-               this.$.storage.deleteImage(this.boardContent.id, imageItem.id, (status)=>{
-                  if(!status){
-                     this._save();
-                  }
-               });
+                let imageItem = e.detail;
+                this.$.storage.deleteImage(this.boardContent.id, imageItem.id, (status) => {
+                    if (!status) {
+                        this._save();
+                    }
+                });
             },
             _createBoard() {
                 this.boardContent = {
@@ -260,14 +273,31 @@
             _dragOver(e) {
                 return false;
             },
-            _storageReady(){
+            _storageReady() {
 
             },
-            _toggleViewportList(){
+            _toggleViewportList() {
 
             },
             _restoreViewport(e) {
-               this.$.board.animateViewport(e.detail);
+                this.$.board.animateViewport(e.detail);
+            },
+            _toggleDrawRectMode() {
+                if (this.currentMode === 'DRAW_RECT') {
+                    this.currentMode = 'IDLE';
+                    this.$.board.linkedGraph.exitDrawRectMode();
+
+
+                } else {
+                    this.currentMode = 'DRAW_RECT';
+                    this.$.board.linkedGraph.enterDrawRectMode((rect) => {
+                       // TODO create rect based item
+                       console.log("Create item : ", rect);
+                    });
+                }
+            },
+            _isEnabledStyle(currentMode, mode) {
+                return currentMode === mode ? 'enabled' : '';
             }
         });
     </script>
