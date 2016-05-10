@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <link rel="import" href="./app-imports.html">
 
-<link rel="import" href="./linked-graph.html">
+<link rel="import" href="./graph/board-graph.html">
 
 <script type="text/javascript" src="../../bower_components/marked/marked.min.js"></script>
 
@@ -151,7 +151,7 @@
                 //      return false;
                 //  };
 
-                this.linkedGraph = new LinkedGraph("#d3Board");
+                this.linkedGraph = new BoardGraph("#d3Board");
                 this.linkedGraph.pencilFilter = false;
 
                 this.linkedGraph.onBoardClicked = (e, pos) => {

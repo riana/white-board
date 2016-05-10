@@ -15,20 +15,20 @@
     .node-text {}
 </style>
 
-<script type="text/javascript" src="../../bower_components/d3/d3.js"></script>
-<script type="text/javascript" src="../../bower_components/marked/marked.min.js"></script>
+<script type="text/javascript" src="../../../bower_components/d3/d3.js"></script>
+<script type="text/javascript" src="../../../bower_components/marked/marked.min.js"></script>
 
-<link rel="stylesheet" title="Default" href="../../bower_components/highlightjs/styles/default.css">
+<link rel="stylesheet" title="Default" href="../../../bower_components/highlightjs/styles/default.css">
 <!-- <link rel="stylesheet" title="Default" href="../../bower_components/highlightjs/styles/dracula.css"> -->
-<script type="text/javascript" src="../../bower_components/highlightjs/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../bower_components/highlightjs/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 </script>
 
-<script type="text/javascript" src="./graph/ReshapeController.js"></script>
-<script type="text/javascript" src="./graph/NodesRenderer.js"></script>
-<script type="text/javascript" src="./graph/ImagesRenderer.js"></script>
-<script type="text/javascript" src="./graph/ZonesRenderer.js"></script>
+<script type="text/javascript" src="./ReshapeController.js"></script>
+<script type="text/javascript" src="./NodesRenderer.js"></script>
+<script type="text/javascript" src="./ImagesRenderer.js"></script>
+<script type="text/javascript" src="./ZonesRenderer.js"></script>
 
 
 
@@ -74,7 +74,7 @@
         var d3 = require("d3");
     }
 
-    class LinkedGraph {
+    class BoardGraph {
 
         constructor(elSelector) {
             this.state = LinkedGraphStates.IDLE;
