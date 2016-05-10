@@ -25,7 +25,16 @@
     hljs.initHighlightingOnLoad();
 </script>
 
+<script type="text/javascript" src="./graph/ReshapeController.js"></script>
+<script type="text/javascript" src="./graph/NodesRenderer.js"></script>
+<script type="text/javascript" src="./graph/ImagesRenderer.js"></script>
+<script type="text/javascript" src="./graph/ZonesRenderer.js"></script>
+
+
+
 <script>
+
+   // Check states necessity
     const LinkedGraphStates = {
         IDLE: "IDLE",
         DRAGGING_ITEM: "DRAGGING_ITEM",
@@ -106,24 +115,26 @@
                 .on("mouseup", function(e) {
                     let dt = d3.event.timeStamp - this.touchStartDate;
 
+                    // FIXME : Handle picking
+                  //   var nodes = self.nodesLayer.selectAll(".node")[0];
+                  //   let pickedNodes = nodes.filter(node => {
+                  //       let bbox = node.getBoundingClientRect();
+                  //       let x = d3.event.clientX;
+                  //       let y = d3.event.clientY;
+                    //
+                  //       let bbx = bbox.left;
+                  //       let bby = bbox.top;
+                  //       let inside = x > bbx && x < (bbx + bbox.width);
+                  //       inside = inside && y > bby && y < (bby + bbox.height);
+                  //       return inside;
+                  //   });
 
-                    var nodes = self.nodesLayer.selectAll(".node")[0];
-                    let pickedNodes = nodes.filter(node => {
-                        let bbox = node.getBoundingClientRect();
-                        let x = d3.event.clientX;
-                        let y = d3.event.clientY;
+                    let pickedNodes = []
 
-                        let bbx = bbox.left;
-                        let bby = bbox.top;
-                        let inside = x > bbx && x < (bbx + bbox.width);
-                        inside = inside && y > bby && y < (bby + bbox.height);
-                        return inside;
-                    });
                     if (dt < 50 && pickedNodes.length === 0) {
                         let coords = getDiagramCoords(d3.event.x, d3.event.y, self.translate, self.scale);
                         console.log('click on board : ', d3.event, coords);
-                        self.selectedImage = null;
-                        self.updateImages(self.data);
+                        self.cancelReshape();
                         self.onBoardClicked(d3.event, coords);
                     }
 
@@ -150,6 +161,15 @@
 
             this.container = this.svg.append("g");
 
+            this.renderers = [];
+            this.renderers.push(new ZonesRenderer(this));
+            this.renderers.push(new NodesRenderer(this));
+            this.renderers.push(new ImagesRenderer(this));
+
+
+
+            this.reshapeController = new ReshapeController(this);
+            this.renderers.push(this.reshapeController);
 
             this.drawDrag = d3.behavior.drag()
                 .on('dragstart', (d, i) => {
@@ -188,11 +208,6 @@
                     }
                 });
             this.svg.call(this.drawDrag);
-
-            this.zonesLayer = this.container.append("g");
-            this.linksLayer = this.container.append("g");
-            this.nodesLayer = this.container.append("g");
-
 
             this.drag = d3.behavior.drag()
                 .on("drag", function(d, i) {
@@ -234,154 +249,29 @@
 
                 });
             this.data = {}
+        }
 
-            this.setupControlLayer();
+        startReshape(item) {
+            this.reshapeController.selectedImage = item;
+            this.reshapeController.update(this.data);
+        }
+
+        cancelReshape() {
+            this.reshapeController.selectedImage = null;
+            this.redraw();
+        }
+
+        onItemClicked(d) {
+            if (this.onNodeClicked && this.state === LinkedGraphStates.IDLE) {
+                let screenPos = getScreenCoords(d.x, d.y, this.translate, this.scale);
+                this.onNodeClicked(d, screenPos);
+            }
+            d3.event.preventDefault();
+            d3.event.stopPropagation();
         }
 
         getDiagramCoords(x, y) {
             return getDiagramCoords(x, y, this.translate, this.scale);
-        }
-
-        updateEdges(data) {
-            var link = this.linksLayer.selectAll("path")
-                .data(data.links);
-            link
-                .enter().append("path")
-                .attr("class", "link")
-                .attr("stroke", "#000000")
-                .attr("stroke-width", 2)
-                .attr("fill", "none")
-                .attr("style", () => {
-                    return this.pencilFilter ? "filter:url(#filter)" : "";
-                });
-
-
-            link.attr("d", function(d) {
-                var target = data.nodes.filter((n) => {
-                    return n.id === d.target;
-                })[0];
-                var source = data.nodes.filter((n) => {
-                    return n.id === d.source;
-                })[0];
-                var dx = target.x - source.x,
-                    dy = target.y - source.y,
-                    dr = Math.sqrt(dx * dx + dy * dy);
-                // Curved line
-                // return "M" + source.x + "," + source.y + "A" + dr + "," + dr + " 0 0,1 " + target.x + "," + target.y;
-
-                var p2 = rotate(0, 0, dx, dy, 90);
-                var scale = dr / 4;
-                scale = scale * Math.sign(dy) / dr;
-                if (dx < 0) {
-
-                }
-                return "M" + source.x + ',' + source.y + 'S' + (source.x + dx / 2 + p2[0] * scale) + "," + (source.y + dy / 2 + p2[1] * scale) + ',' + target.x + "," + target.y;
-
-                // Straigth line
-                // return "M" + source.x + ',' + source.y + 'L' + target.x + "," + target.y;
-            });
-
-            link.exit().remove();
-        }
-
-        updateNodes(data) {
-            let self = this;
-            var node = this.nodesLayer.selectAll(".node")
-                .data(data.nodes);
-
-            var nodeGroup = node.enter().append("g")
-                .call(this.drag)
-                .attr("class", "node").attr("style", () => {
-                    return this.pencilFilter ? "filter:url(#filter)" : "";
-                });
-
-            node.attr("transform", function(d) {
-                return 'translate(' + [d.x, d.y] + ')';
-            });
-
-            node.exit().remove();
-
-            nodeGroup.append("foreignObject")
-
-            .attr("class", "node-fo")
-                // .attr("width", 100)
-                // .attr("height", 30)
-                .append("xhtml:body")
-                .append("div")
-                .on('click', function(d) {
-                    if (self.onNodeClicked && self.state === LinkedGraphStates.IDLE) {
-                        let screenPos = getScreenCoords(d.x, d.y, self.translate, self.scale);
-                        self.onNodeClicked(d, screenPos);
-                    }
-                    d3.event.preventDefault();
-                    d3.event.stopPropagation();
-                })
-                .attr("class", function(d) {
-                    // let container = d3.select(this);
-                    // console.log(d, container);
-                    let style = "node-sticky";
-                    if (d.type === "text") {
-                        style = "node-text";
-                    }
-                    return `node-html ${style}`;
-                })
-                .append("div")
-
-            .html(function(d) {
-                return d.text;
-            });
-
-            node.select(".node-fo").each(function(d) {
-
-                let container = d3.select(this);
-                let content = d3.select(this).select(".node-html").each(function(d) {
-                    let bounds = this.getBoundingClientRect();
-                    let width = d.width ? d.width : 100;
-                    let height = d.height ? d.height : 100;
-                    container
-                        .attr("width", '' + width + 'px')
-                        .attr("height", '' + height + 'px')
-                        .attr("transform", function(d) {
-                            let bbox = this.getBBox()
-                            return "translate(" + [-width / 2, -height / 2] + ")"
-                        });
-
-                });
-
-            });
-
-            function insertLinebreaks(d) {
-                var el = d3.select(this);
-                // var lineHeight = el[0][0].clientHeight;
-                var words = d.text.split('\n');
-
-                el.text('');
-
-                for (var i = 0; i < words.length; i++) {
-                    var tspan = el.append('br').text(words[i]);
-                    // if (i > 0)
-                    //    tspan.attr('x', 0).attr('dy', lineHeight);
-                }
-            };
-
-
-            node.select(".node-html").html(function(d) {
-                //  var html = d.text.split("\n");
-                //  return html.join("<br>");
-                marked.setOptions({
-                    highlight: function(code) {
-                        return hljs.highlightAuto(code).value;
-                    }
-                });
-
-                return marked(d.text, {
-                    breaks: true,
-                    sanitize: true
-                });
-            }).attr("updateStyle", function(d) {
-                this.style.color = d.style ? d.style.color : "#000000";
-                this.style.background = d.style ? d.style.background : "none";
-            });
         }
 
         setData(data) {
@@ -402,12 +292,15 @@
             this.updateGraph(data);
         }
 
+        redraw() {
+            this.updateGraph(this.data);
+        }
+
         updateGraph(data) {
             this.data = data;
-            this.updateEdges(data);
-            this.updateNodes(data);
-            this.updateImages(data);
-            this.updateZones(data);
+            this.renderers.forEach(renderer => {
+                renderer.update(data);
+            });
         }
 
         animateViewport(view) {
@@ -426,214 +319,6 @@
                 this.zoom.scale(view.scale);
                 this.container.attr("transform", "translate(" + view.translate + ")scale(" + view.scale + ")");
             }
-        }
-
-        setupControlLayer() {
-            let resizeDrag = d3.behavior.drag()
-                .on('dragstart', (d) => {
-                    //   if (this.imageTest.selected) {
-                    d3.event.sourceEvent.preventDefault();
-                    d3.event.sourceEvent.stopPropagation();
-                    //   }
-                })
-                .on('drag', (d) => {
-                    if (this.selectedImage) {
-                        // let dMove = (d3.event.dx * d3.event.dx) + (d3.event.dy * d3.event.dy);
-                        // let diagonal = (this.imageTest.width * this.imageTest.width) + (this.imageTest.height * this.imageTest.height);
-                        // let ratio = dMove / diagonal;
-                        this.selectedImage.width += d3.event.dx;
-                        this.selectedImage.height += d3.event.dy;
-                        this.updateImages(this.data);
-                        d3.event.sourceEvent.preventDefault();
-                        d3.event.sourceEvent.stopPropagation();
-                    }
-
-                });
-
-            let rotateDrag = d3.behavior.drag()
-                .on('dragstart', (e) => {
-                    //   if (this.imageTest.selected) {
-                    d3.event.sourceEvent.preventDefault();
-                    d3.event.sourceEvent.stopPropagation();
-                    //   }
-                })
-                .on('drag', (e) => {
-                    if (this.selectedImage) {
-                        let amount = d3.event.dx / 10;
-                        this.selectedImage.rotation -= amount;
-
-                        this.updateImages(this.data);
-                        d3.event.sourceEvent.preventDefault();
-                        d3.event.sourceEvent.stopPropagation();
-                    }
-
-                });
-
-            this.controlLayer = this.container.append("g");
-
-            this.controlLayer.append("svg:rect")
-                .attr("id", "imageRect")
-                .attr("fill", "none")
-                .attr("stroke", "#FF0000");
-
-            this.controlLayer.append("svg:circle")
-                .attr("id", "imageResize")
-                .attr("fill", "#EE0000")
-                .attr("stroke", "#FF0000")
-                .attr('r', 10)
-                .call(resizeDrag);
-
-
-            this.controlLayer.append("svg:line")
-                .attr("id", "rotateLine")
-                .attr("stroke", "#FF0000");
-
-            this.controlLayer.append("svg:circle")
-                .attr("id", "rotateCircle")
-                .attr("fill", "#EE0000")
-                .attr("stroke", "#FF0000")
-                .attr('r', 10)
-                .call(rotateDrag);
-        }
-
-        updateZones(data) {
-            let zonesNodes = this.zonesLayer.selectAll(".zone").data(data.zones);
-            zonesNodes.exit().remove();
-
-            zonesNodes.enter().append("svg:rect")
-                .attr("class", "zone")
-                .attr("fill", "#0022aa")
-                .attr("stroke", "none")
-                .attr("opacity", "0.1")
-                .on('click', function(d) {
-                   // TODO edit zone bounds
-                   console.log("Zone selected : ", d);
-                });
-
-
-            this.zonesLayer.selectAll(".zone")
-                .attr("x", (d) => {
-                    return d.x;
-                })
-                .attr("y", (d) => {
-                    return d.y;
-                })
-                .attr("height", (d) => {
-                    return d.height;
-                })
-                .attr("width", (d) => {
-                    return d.width;
-                });
-        }
-
-        updateImages(data) {
-            let self = this;
-            var imageNodes = this.nodesLayer.selectAll(".image-node")
-                .data(data.images);
-            imageNodes.exit().remove();
-            imageNodes.enter().append("svg:image")
-                .attr("class", "image-node")
-                .call(this.drag)
-                .on("click", (d) => {
-                    if (this.selectedImage === d) {
-                        this.selectedImage = null;
-                    } else {
-                        this.selectedImage = d;
-                    }
-
-                    this.updateImages(this.data);
-                });
-
-            function rotateTransform(d) {
-                if (d) {
-                    let rx = d.x + d.width / 2;
-                    let ry = d.y + d.height / 2;
-                    let rotateTransform = "rotate(" + d.rotation + " " + rx + " " + ry + ")";
-                    return rotateTransform;
-                }
-                return "";
-            }
-
-            this.controlLayer.attr("visibility", (e) => {
-                return this.selectedImage ? "visible" : "hidden";
-            });
-
-            this.nodesLayer.selectAll('.image-node')
-                .attr("xlink:href", function(d) {
-                    //FIXME Improve image fetching
-                    //   if (self.medias && self.medias[d.id]) {
-                    //       console.log("media found");
-                    //   } else {
-                    //       console.log("media not found");
-                    //   }
-                    return self.medias ? self.medias[d.id] : null;
-                })
-                .attr('x', function(d) {
-                    return d.x;
-                })
-                .attr('y', function(d) {
-                    return d.y;
-                })
-                .attr("height", function(d) {
-                    return d.height;
-                })
-                .attr("width", function(d) {
-                    return d.width;
-                })
-                .attr("transform", rotateTransform);
-
-            this.controlLayer.selectAll("#imageRect")
-                .attr("x", (d) => {
-                    return this.selectedImage ? this.selectedImage.x - 2 : 0;
-                })
-                .attr("y", (d) => {
-                    return this.selectedImage ? this.selectedImage.y - 2 : 0;
-                })
-                .attr("height", (d) => {
-                    return this.selectedImage ? this.selectedImage.height + 4 : 0;
-                })
-                .attr("width", (d) => {
-                    return this.selectedImage ? this.selectedImage.width + 4 : 0;
-                })
-                .attr("transform", rotateTransform);
-
-            this.controlLayer.attr("transform", () => {
-                if (this.selectedImage) {
-                    return rotateTransform(this.selectedImage);
-                }
-                return '';
-            });
-
-            this.controlLayer.selectAll('#imageResize')
-                .attr('cx', (d) => {
-                    return this.selectedImage ? this.selectedImage.x + this.selectedImage.width + 4 : 0;
-                })
-                .attr('cy', (d) => {
-                    return this.selectedImage ? this.selectedImage.y + this.selectedImage.height + 4 : 0;
-                })
-
-            let rotateHandleCenter = {
-                x: this.selectedImage ? this.selectedImage.x + this.selectedImage.width / 2 : 0,
-                y: this.selectedImage ? this.selectedImage.y + this.selectedImage.height : 0
-            }
-
-            this.controlLayer.selectAll('#rotateLine')
-                .attr("x1", (d) => {
-                    return rotateHandleCenter.x;
-                })
-                .attr("y1", (d) => {
-                    return rotateHandleCenter.y;
-                })
-                .attr("x2", (d) => {
-                    return rotateHandleCenter.x;
-                })
-                .attr("y2", (d) => {
-                    return rotateHandleCenter.y + 40;
-                })
-
-            this.controlLayer.selectAll('#rotateCircle')
-                .attr('cx', rotateHandleCenter.x)
-                .attr('cy', rotateHandleCenter.y + 40)
         }
 
         addMedia(id, data) {
