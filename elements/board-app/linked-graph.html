@@ -171,7 +171,7 @@
                 })
                 .on('dragend', (d, i) => {
                     if (this.state === LinkedGraphStates.DRAW_RECT) {
-                       this.applyZoom(this.viewportBackup);
+                        this.applyZoom(this.viewportBackup);
                         this.exitDrawRectMode();
                     }
                 })
@@ -189,6 +189,7 @@
                 });
             this.svg.call(this.drawDrag);
 
+            this.zonesLayer = this.container.append("g");
             this.linksLayer = this.container.append("g");
             this.nodesLayer = this.container.append("g");
 
@@ -384,7 +385,10 @@
         }
 
         setData(data) {
-
+            //Backward comptaibility
+            if (!data.zones) {
+                data.zones = [];
+            }
 
             if (data.view) {
                 let defaultView = {
@@ -396,7 +400,6 @@
             }
 
             this.updateGraph(data);
-            this.updateImages(data);
         }
 
         updateGraph(data) {
@@ -404,6 +407,7 @@
             this.updateEdges(data);
             this.updateNodes(data);
             this.updateImages(data);
+            this.updateZones(data);
         }
 
         animateViewport(view) {
@@ -490,6 +494,36 @@
                 .attr("stroke", "#FF0000")
                 .attr('r', 10)
                 .call(rotateDrag);
+        }
+
+        updateZones(data) {
+            let zonesNodes = this.zonesLayer.selectAll(".zone").data(data.zones);
+            zonesNodes.exit().remove();
+
+            zonesNodes.enter().append("svg:rect")
+                .attr("class", "zone")
+                .attr("fill", "#0022aa")
+                .attr("stroke", "none")
+                .attr("opacity", "0.1")
+                .on('click', function(d) {
+                   // TODO edit zone bounds
+                   console.log("Zone selected : ", d);
+                });
+
+
+            this.zonesLayer.selectAll(".zone")
+                .attr("x", (d) => {
+                    return d.x;
+                })
+                .attr("y", (d) => {
+                    return d.y;
+                })
+                .attr("height", (d) => {
+                    return d.height;
+                })
+                .attr("width", (d) => {
+                    return d.width;
+                });
         }
 
         updateImages(data) {
@@ -631,7 +665,7 @@
                     y: 0,
                     width: 0,
                     height: 0
-                }
+                };
             }
 
             this.onDrawRectComplete = onDrawRectComplete;
