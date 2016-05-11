@@ -25,6 +25,7 @@
     hljs.initHighlightingOnLoad();
 </script>
 
+<script type="text/javascript" src="./DrawRectController.js"></script>
 <script type="text/javascript" src="./ReshapeController.js"></script>
 <script type="text/javascript" src="./NodesRenderer.js"></script>
 <script type="text/javascript" src="./ImagesRenderer.js"></script>
@@ -33,8 +34,7 @@
 
 
 <script>
-
-   // Check states necessity
+    // Check states necessity
     const LinkedGraphStates = {
         IDLE: "IDLE",
         DRAGGING_ITEM: "DRAGGING_ITEM",
@@ -116,18 +116,18 @@
                     let dt = d3.event.timeStamp - this.touchStartDate;
 
                     // FIXME : Handle picking
-                  //   var nodes = self.nodesLayer.selectAll(".node")[0];
-                  //   let pickedNodes = nodes.filter(node => {
-                  //       let bbox = node.getBoundingClientRect();
-                  //       let x = d3.event.clientX;
-                  //       let y = d3.event.clientY;
+                    //   var nodes = self.nodesLayer.selectAll(".node")[0];
+                    //   let pickedNodes = nodes.filter(node => {
+                    //       let bbox = node.getBoundingClientRect();
+                    //       let x = d3.event.clientX;
+                    //       let y = d3.event.clientY;
                     //
-                  //       let bbx = bbox.left;
-                  //       let bby = bbox.top;
-                  //       let inside = x > bbx && x < (bbx + bbox.width);
-                  //       inside = inside && y > bby && y < (bby + bbox.height);
-                  //       return inside;
-                  //   });
+                    //       let bbx = bbox.left;
+                    //       let bby = bbox.top;
+                    //       let inside = x > bbx && x < (bbx + bbox.width);
+                    //       inside = inside && y > bby && y < (bby + bbox.height);
+                    //       return inside;
+                    //   });
 
                     let pickedNodes = []
 
@@ -171,43 +171,8 @@
             this.reshapeController = new ReshapeController(this);
             this.renderers.push(this.reshapeController);
 
-            this.drawDrag = d3.behavior.drag()
-                .on('dragstart', (d, i) => {
-                    if (this.state === LinkedGraphStates.DRAW_RECT) {
-                        this.viewportBackup = {
-                            scale: self.scale,
-                            translate: self.translate
-                        };
-
-                        // TODO fix DRAW_RECT offset
-                        let coords = getDiagramCoords(d3.event.sourceEvent.x, d3.event.sourceEvent.y, this.translate, this.scale);
-
-                        this.drawingRect.x = coords.x;
-                        this.drawingRect.y = coords.y;
-                        this.drawingRect.width = 0;
-                        this.drawingRect.height = 0;
-
-                    }
-                })
-                .on('dragend', (d, i) => {
-                    if (this.state === LinkedGraphStates.DRAW_RECT) {
-                        this.applyZoom(this.viewportBackup);
-                        this.exitDrawRectMode();
-                    }
-                })
-                .on("drag", (d, i) => {
-                    if (this.state === LinkedGraphStates.DRAW_RECT) {
-                        this.drawingLayer.attr("visibility", "visible");
-                        let coords = getScreenCoords(d3.event.dx, d3.event.dy, [0, 0], 1 / self.scale);
-                        this.drawingRect.width += coords.x;
-                        this.drawingRect.height += coords.y;
-
-                        this.drawingRect.width = Math.max(this.drawingRect.width, 0);
-                        this.drawingRect.height = Math.max(this.drawingRect.height, 0);
-                        this.updateDrawingRect();
-                    }
-                });
-            this.svg.call(this.drawDrag);
+            this.drawRectController = new DrawRectController(this);
+            this.renderers.push(this.drawRectController);
 
             this.drag = d3.behavior.drag()
                 .on("drag", function(d, i) {
@@ -336,54 +301,19 @@
         }
 
         enterDrawRectMode(onDrawRectComplete) {
-            if (!this.drawingLayer) {
-                this.drawingLayer = this.container.append("g");
-
-                this.drawingLayer.append("svg:rect")
-                    .attr("id", "drawingRect")
-                    .attr("fill", "none")
-                    .attr("stroke", "#FF0000")
-                    .attr("stroke-width", "10px");
-
-                this.drawingRect = {
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0
-                };
-            }
-
             this.onDrawRectComplete = onDrawRectComplete;
-
             this.state = LinkedGraphStates.DRAW_RECT;
         }
 
         exitDrawRectMode() {
             this.state = LinkedGraphStates.IDLE;
-            this.drawingLayer.attr("visibility", "hidden");
             if (this.onStateChanged) {
                 this.onStateChanged(this.state);
             }
 
             if (this.onDrawRectComplete) {
-                this.onDrawRectComplete(this.drawingRect);
+                this.onDrawRectComplete(this.drawRectController.drawingRect);
             }
-        }
-
-        updateDrawingRect() {
-            this.drawingLayer.selectAll("#drawingRect")
-                .attr("x", (d) => {
-                    return this.drawingRect.x;
-                })
-                .attr("y", (d) => {
-                    return this.drawingRect.y;
-                })
-                .attr("height", (d) => {
-                    return this.drawingRect.height;
-                })
-                .attr("width", (d) => {
-                    return this.drawingRect.width;
-                });
         }
 
     }

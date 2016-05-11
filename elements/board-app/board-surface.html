@@ -94,9 +94,9 @@
                 max-width: 500px;
             }
 
-            #canvasBoard{
-               position: absolute;
-               visibility: hidden;
+            #canvasBoard {
+                position: absolute;
+                visibility: hidden;
             }
         </style>
 
@@ -162,11 +162,11 @@
                 };
 
                 this.linkedGraph.onViewportChanged = (viewTransforms) => {
-                    let boardBounds = this.$.d3Board.getBoundingClientRect();
-                    let viewport = {
-                        width: boardBounds.width / viewTransforms.scale,
-                        height: boardBounds.height / viewTransforms.scale,
-                    };
+                  //   let boardBounds = this.$.d3Board.getBoundingClientRect();
+                  //   let viewport = {
+                  //       width: boardBounds.width / viewTransforms.scale,
+                  //       height: boardBounds.height / viewTransforms.scale,
+                  //   };
 
                     if (!this.data.view) {
                         this.data.view = {
@@ -175,8 +175,8 @@
                         }
                     }
 
-                    this.data.view.scale = viewTransforms.scale,
-                        this.data.view.translate = viewTransforms.translate
+                    this.data.view.scale = viewTransforms.scale;
+                    this.data.view.translate = viewTransforms.translate;
                 };
 
                 this.linkedGraph.onDragItem = (pos, item) => {
@@ -192,10 +192,10 @@
                         let index = this.data.nodes.indexOf(item);
                         this.data.nodes.splice(index, 1);
                         index = this.data.images.indexOf(item);
-                        if(index != -1){
-                           this.data.images.splice(index, 1);
-                           this.linkedGraph.removeMedia(item);
-                           this.fire("media-removed", item);
+                        if (index != -1) {
+                            this.data.images.splice(index, 1);
+                            this.linkedGraph.removeMedia(item);
+                            this.fire("media-removed", item);
                         }
 
                         let links = this.data.links.filter((link) => {
@@ -320,8 +320,8 @@
                 this.linkedGraph.addMedia(id, data);
             },
 
-            animateViewport(view){
-               this.linkedGraph.animateViewport(view);
+            animateViewport(view) {
+                this.linkedGraph.animateViewport(view);
             }
 
         });
