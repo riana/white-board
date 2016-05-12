@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <link rel="import" href="./app-imports.html">
-
+<link rel="import" href="./graph/board-graph.html">
 
 <dom-module id="viewport-list">
 
@@ -101,43 +101,38 @@
                     this.set("boardContent.viewports", []);
                 }
 
+                let index = 0;
+                this.debounce("updateScreenShots", () => {
+                    this.updateScreenShots(index, ()=> {
+
+                    });
+                }, 1000);
+            },
+            updateScreenShots(index, done) {
+
+                let view = this.boardContent.viewports[index];
+                BoardGraph.getScreenshot(view, screenShot => {
+                    this.set(`boardContent.viewports.${index}.screenShot`, screenShot);
+                    index++;
+                    if (index < this.boardContent.viewports.length) {
+                        this.updateScreenShots(index, done);
+                    }else {
+                       done();
+                    }
+                })
             },
             _addViewport() {
                 console.log("_addViewport");
                 let newViewport = JSON.parse(JSON.stringify(this.boardContent.view));
-                this.getScreenshot(screenShot => {
+                BoardGraph.getScreenshot(newViewport, screenShot => {
                     newViewport.screenShot = screenShot;
                     this.push("boardContent.viewports", newViewport);
-                    console.log("_addViewport > getScreenshot ", screenShot);
                 });
 
 
             },
             _restoreViewport(e) {
                 this.fire("restore-viewport", e.model.viewport)
-            },
-            getScreenshot(cb) {
-                let svg = document.getElementById("SVGBoard");
-                let serializer = new XMLSerializer();
-                let str = serializer.serializeToString(svg);
-                var canvas = document.getElementById('canvasBoard');
-                var ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                var encodedData = window.btoa(str);
-
-                var image = new Image();
-                image.setAttribute('crossOrigin', 'anonymous');
-
-                image.onload = function() {
-                    ctx.drawImage(image, 0, 0);
-                    let screenShot = canvas.toDataURL();
-                    cb(screenShot);
-
-                };
-
-                image.src = 'data:image/svg+xml;base64,' + encodedData;
-
             },
             _delete(e) {
                 let index = e.model.index;
@@ -149,7 +144,7 @@
 
                 let newViewport = JSON.parse(JSON.stringify(this.boardContent.view));
 
-                this.getScreenshot(screenShot => {
+                BoardGraph.getScreenshot(newViewport, screenShot => {
                     newViewport.screenShot = screenShot;
                     this.set("boardContent.viewports." + index, newViewport);
                 });

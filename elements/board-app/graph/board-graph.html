@@ -159,7 +159,7 @@
                 .attr("xChannelSelector", "R")
                 .attr("in", "SourceGraphic");
 
-            this.container = this.svg.append("g");
+            this.container = this.svg.append("g").attr("id", "diagramContainer");
 
             this.renderers = [];
             this.renderers.push(new ZonesRenderer(this));
@@ -314,6 +314,34 @@
             if (this.onDrawRectComplete) {
                 this.onDrawRectComplete(this.drawRectController.drawingRect);
             }
+        }
+
+        static getScreenshot(view, cb) {
+           let svg = document.getElementById("SVGBoard");
+           var cln = svg.cloneNode(true);
+           var container = cln.getElementById("diagramContainer");
+           container.attributes["transform"].value = "translate(" + view.translate + ")scale(" + view.scale + ")";
+
+           let serializer = new XMLSerializer();
+           let str = serializer.serializeToString(cln);
+           var canvas = document.getElementById('canvasBoard');
+           var ctx = canvas.getContext('2d');
+           ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+           var encodedData = window.btoa(str);
+
+           var image = new Image();
+           image.setAttribute('crossOrigin', 'anonymous');
+
+           image.onload = function() {
+                ctx.drawImage(image, 0, 0);
+                let screenShot = canvas.toDataURL();
+                cb(screenShot);
+
+           };
+
+           image.src = 'data:image/svg+xml;base64,' + encodedData;
+
         }
 
     }

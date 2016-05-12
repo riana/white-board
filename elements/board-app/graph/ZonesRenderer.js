@@ -19,7 +19,6 @@ class ZonesRenderer {
 			.attr("stroke", "none")
 			.attr("opacity", "0.1")
 			.on('click', function (d) {
-				// TODO edit zone bounds
 				self.diagram.startReshape(d);
 				d3.event.preventDefault();
 				d3.event.stopPropagation();

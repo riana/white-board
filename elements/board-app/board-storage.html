@@ -117,11 +117,12 @@
                 console.log(e);
             },
             save(data) {
-               let savedData = JSON.parse(JSON.stringify(data));
-               delete savedData.viewports;
-               // savedData.viewports.forEach(viewport => {
-                  //TODO save viewport to media ?
-               // });
+                let savedData = JSON.parse(JSON.stringify(data));
+
+                savedData.viewports.forEach(viewport => {
+                    delete viewport.screenShot;
+                });
+                
                 this._electSave('boards/' + data.id, savedData);
                 this.updateIndex(data);
             },
@@ -177,7 +178,7 @@
                 } else {
                     let url = `/api/media?path=${boardId}/${image.id}`;
                     this.getImageHTTP(boardId, image, cb);
-                  //   cb(url);
+                    //   cb(url);
                 }
             },
             getImageHTTP(boardId, image, cb) {
