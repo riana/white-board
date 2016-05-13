@@ -16,8 +16,8 @@
 </style>
 
 <script type="text/javascript" src="../../../bower_components/d3/d3.js"></script>
-<script type="text/javascript" src="../../../bower_components/marked/marked.min.js"></script>
 
+<script type="text/javascript" src="../../../bower_components/marked/marked.min.js"></script>
 <link rel="stylesheet" title="Default" href="../../../bower_components/highlightjs/styles/default.css">
 <!-- <link rel="stylesheet" title="Default" href="../../bower_components/highlightjs/styles/dracula.css"> -->
 <script type="text/javascript" src="../../../bower_components/highlightjs/highlight.pack.js"></script>
@@ -199,7 +199,7 @@
                     d3.event.sourceEvent.stopPropagation();
                 })
                 .on('dragend', function(d, i) {
-                    if (self.onDragItemEnd && self.lastDrag) {
+                    if (self.state === LinkedGraphStates.DRAGGING_ITEM && self.onDragItemEnd && self.lastDrag) {
                         let coords = getScreenCoords(self.lastDrag.x, self.lastDrag.y, self.translate, self.scale);
                         self.onDragItemEnd(coords,
                             d);
@@ -317,31 +317,34 @@
         }
 
         static getScreenshot(view, cb) {
-           let svg = document.getElementById("SVGBoard");
-           var cln = svg.cloneNode(true);
-           var container = cln.getElementById("diagramContainer");
-           container.attributes["transform"].value = "translate(" + view.translate + ")scale(" + view.scale + ")";
+            let svg = document.getElementById("SVGBoard");
+            var cln = svg.cloneNode(true);
+            var container = cln.getElementById("diagramContainer");
+            container.attributes["transform"].value = "translate(" + view.translate + ")scale(" + view.scale + ")";
 
-           let serializer = new XMLSerializer();
-           let str = serializer.serializeToString(cln);
-           var canvas = document.getElementById('canvasBoard');
-           var ctx = canvas.getContext('2d');
-           ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let serializer = new XMLSerializer();
+            let str = serializer.serializeToString(cln);
+            var canvas = document.getElementById('canvasBoard');
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-           var encodedData = window.btoa(str);
+            // encode xml string to utf-8
+            var encodedData = window.btoa(unescape(encodeURIComponent(str)));
 
-           var image = new Image();
-           image.setAttribute('crossOrigin', 'anonymous');
+            var image = new Image();
+            image.setAttribute('crossOrigin', 'anonymous');
 
-           image.onload = function() {
+            image.onload = function() {
                 ctx.drawImage(image, 0, 0);
                 let screenShot = canvas.toDataURL();
                 cb(screenShot);
+            };
+            image.onerror = function(e) {
+                // TODO Handle screenshot creation error due to special characters
+                console.error("Error building screenShot ... done");
+            };
 
-           };
-
-           image.src = 'data:image/svg+xml;base64,' + encodedData;
-
+            image.src = 'data:image/svg+xml;base64,' + encodedData;
         }
 
     }
