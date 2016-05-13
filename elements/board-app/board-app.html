@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<link rel="import" href="./app-imports.html">
+<link rel="import" href="../app-imports.html">
 
 <link rel="import" href="./board-storage.html">
 <link rel="import" href="./board-toolbar.html">
-<link rel="import" href="./board-surface.html">
+
 <link rel="import" href="./board-selector.html">
 <link rel="import" href="./viewport-list.html">
-<link rel="import" href="./UUID.html">
 
-<link rel="import" href="../fa-button/fa-button.html">
-<link rel="import" href="../backdrop-view/backdrop-view.html">
+
+
+<link rel="import" href="../board-surface/board-surface.html">
 
 <dom-module id="board-app">
     <template>
@@ -291,8 +291,6 @@
                 if (this.currentMode === 'DRAW_RECT') {
                     this.currentMode = 'IDLE';
                     this.$.board.linkedGraph.exitDrawRectMode();
-
-
                 } else {
                     this.currentMode = 'DRAW_RECT';
                     this.$.board.linkedGraph.enterDrawRectMode((rect) => {

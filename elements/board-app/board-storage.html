@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<link rel="import" href="./app-imports.html">
-<link rel="import" href="../utils/HttpRequest.html">
+<link rel="import" href="../app-imports.html">
 
 <dom-module id="board-storage">
 
@@ -122,7 +121,7 @@
                 savedData.viewports.forEach(viewport => {
                     delete viewport.screenShot;
                 });
-                
+
                 this._electSave('boards/' + data.id, savedData);
                 this.updateIndex(data);
             },
