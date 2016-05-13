@@ -125,6 +125,7 @@
                 console.log("_addViewport");
                 let newViewport = JSON.parse(JSON.stringify(this.boardContent.view));
                 BoardGraph.getScreenshot(newViewport, screenShot => {
+                   console.log("_addViewport => screenShot");
                     newViewport.screenShot = screenShot;
                     this.push("boardContent.viewports", newViewport);
                 });

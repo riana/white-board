@@ -100,7 +100,7 @@
             }
         </style>
 
-        <canvas id="canvasBoard" style="border:2px solid black;" width="1280" height="720">
+        <canvas id="canvasBoard" width="1280" height="720">
         </canvas>
         <div id="d3Board">
             <div id="trash">
@@ -162,11 +162,11 @@
                 };
 
                 this.linkedGraph.onViewportChanged = (viewTransforms) => {
-                  //   let boardBounds = this.$.d3Board.getBoundingClientRect();
-                  //   let viewport = {
-                  //       width: boardBounds.width / viewTransforms.scale,
-                  //       height: boardBounds.height / viewTransforms.scale,
-                  //   };
+                    //   let boardBounds = this.$.d3Board.getBoundingClientRect();
+                    //   let viewport = {
+                    //       width: boardBounds.width / viewTransforms.scale,
+                    //       height: boardBounds.height / viewTransforms.scale,
+                    //   };
 
                     if (!this.data.view) {
                         this.data.view = {
@@ -189,23 +189,7 @@
 
                 this.linkedGraph.onDragItemEnd = (pos, item) => {
                     if (this.isOverTrash(pos)) {
-                        let index = this.data.nodes.indexOf(item);
-                        this.data.nodes.splice(index, 1);
-                        index = this.data.images.indexOf(item);
-                        if (index != -1) {
-                            this.data.images.splice(index, 1);
-                            this.linkedGraph.removeMedia(item);
-                            this.fire("media-removed", item);
-                        }
-
-                        let links = this.data.links.filter((link) => {
-                            return link.source === item.id || link.target === item.id;
-                        });
-
-                        links.forEach((link) => {
-                            let index = this.data.links.indexOf(link);
-                            this.data.links.splice(index, 1);
-                        });
+                        this.deleteItem(item);
                         this.linkedGraph.updateGraph(this.data);
                     }
                     this.$.trashIcon.classList.remove("active");
@@ -256,14 +240,37 @@
                 this.$.stickEditor.style.top = '' + y + 'px';
                 this.$.stickEditor.style.left = '' + x + 'px';
             },
+            deleteItem(item) {
+               let index = this.data.nodes.indexOf(item);
+               this.data.nodes.splice(index, 1);
+               index = this.data.images.indexOf(item);
+               if (index != -1) {
+                   this.data.images.splice(index, 1);
+                   this.linkedGraph.removeMedia(item);
+                   this.fire("media-removed", item);
+               }
+               index = this.data.zones.indexOf(item);
+               if (index != -1) {
+                  this.data.zones.splice(index, 1);
+               }
+
+               let links = this.data.links.filter((link) => {
+                   return link.source === item.id || link.target === item.id;
+               });
+
+               links.forEach((link) => {
+                   let index = this.data.links.indexOf(link);
+                   this.data.links.splice(index, 1);
+               });
+            },
             stopEditNode() {
                 this.selectedNode.width = this.$.editorContent.clientWidth + 10;
                 this.selectedNode.height = this.$.editorContent.clientHeight + 10;
-
-                this.$.measure.innerHTML = marked(this.selectedNode.text, {
+               //  this.selectedNode.text = decodeURIComponent(this.selectedNode.text);
+                this.$.measure.innerHTML = unescape(encodeURIComponent(marked(this.selectedNode.text, {
                     breaks: true,
                     sanitize: true
-                });
+                })));
 
                 let rect = this.$.measure.getBoundingClientRect();
                 this.selectedNode.width = rect.width + 20;
