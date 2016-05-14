@@ -38,6 +38,7 @@
     const LinkedGraphStates = {
         IDLE: "IDLE",
         DRAGGING_ITEM: "DRAGGING_ITEM",
+        EDIT_ITEM: "EDIT_ITEM",
         DRAW_RECT: "DRAW_RECT"
 
     }
@@ -87,6 +88,7 @@
             self.translate = [0, 0];
 
             function zoomed() {
+               console.log("zoomed ", self.state);
                 if (self.state === LinkedGraphStates.IDLE) {
                     self.container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
                     self.scale = d3.event.scale;
@@ -194,6 +196,7 @@
                 })
                 .on('dragstart', function(d, i) {
                     setTimeout(() => {
+                       self.previousState = self.state;
                         self.state = LinkedGraphStates.DRAGGING_ITEM;
                     }, 300);
                     d3.event.sourceEvent.stopPropagation();
@@ -205,7 +208,8 @@
                             d);
                     }
                     setTimeout(() => {
-                        self.state = LinkedGraphStates.IDLE;
+                        // self.state = LinkedGraphStates.IDLE;
+                        self.state   = self.previousState;
                     }, 300);
 
                     // d3.event.stopPropagation();
@@ -347,5 +351,29 @@
             image.src = 'data:image/svg+xml;base64,' + encodedData;
         }
 
+        enterEditMode() {
+           // TODO compute viewport acccording to selected item
+            this.state = LinkedGraphStates.EDIT_ITEM;
+            // this.oldScale = this.scale;
+            // this.scale = 1;
+            // console.log("enterEditMode ", this.scale, this.translate);
+            // if(this.oldScale > 1){
+            //    this.animateViewport({
+            //       translate: this.translate,
+            //       scale: this.scale
+            //    });
+            // }
+        }
+
+        exitEditMode() {
+         //   console.log(this.state, " -> ");
+         //   this.scale = this.oldScale;
+         //   this.animateViewport({
+         //     translate: this.translate,
+         //     scale: this.oldScale
+         //   });
+
+            this.state = LinkedGraphStates.IDLE;
+        }
     }
 </script>

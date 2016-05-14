@@ -214,6 +214,7 @@
             },
             editNode(node, screenPos) {
                 this.editing = true;
+                this.linkedGraph.enterEditMode();
                 this.selectedNode = node;
                 this.$.stickEditor.classList.add("visible");
 
@@ -276,7 +277,7 @@
                 this.selectedNode.width = rect.width + 20;
                 this.selectedNode.height = rect.height + 20;
                 this.linkedGraph.updateGraph(this.data);
-
+this.linkedGraph.exitEditMode();
 
 
 
