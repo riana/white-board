@@ -88,7 +88,6 @@
             self.translate = [0, 0];
 
             function zoomed() {
-                console.log("zoomed ", self.state);
                 if (self.state === LinkedGraphStates.IDLE) {
                     self.container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
                     self.scale = d3.event.scale;
@@ -281,7 +280,6 @@
         }
 
         toViewport(view, duration, cb) {
-           console.log("tov ", view);
             if (!isNaN(view.scale) && !isNaN(view.translate[0]) && !isNaN(view.translate[1])) {
                 this.svg.transition()
                     .duration(duration)
@@ -385,7 +383,6 @@
         }
 
         exitEditMode() {
-            console.log("exit");
             this.state = LinkedGraphStates.IDLE;
             this.scale = this.prevScale;
             this.translate = this.prevTranslate;
@@ -393,7 +390,6 @@
                 translate: this.translate,
                 scale: this.scale
             }, 300, () => {
-               console.log("Done");
             });
 
 
