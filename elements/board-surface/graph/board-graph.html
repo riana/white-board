@@ -88,7 +88,7 @@
             self.translate = [0, 0];
 
             function zoomed() {
-               console.log("zoomed ", self.state);
+                console.log("zoomed ", self.state);
                 if (self.state === LinkedGraphStates.IDLE) {
                     self.container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
                     self.scale = d3.event.scale;
@@ -196,7 +196,7 @@
                 })
                 .on('dragstart', function(d, i) {
                     setTimeout(() => {
-                       self.previousState = self.state;
+                        self.previousState = self.state;
                         self.state = LinkedGraphStates.DRAGGING_ITEM;
                     }, 300);
                     d3.event.sourceEvent.stopPropagation();
@@ -209,7 +209,7 @@
                     }
                     setTimeout(() => {
                         // self.state = LinkedGraphStates.IDLE;
-                        self.state   = self.previousState;
+                        self.state = self.previousState;
                     }, 300);
 
                     // d3.event.stopPropagation();
@@ -277,6 +277,19 @@
                 this.svg.transition()
                     .duration(1000)
                     .call(this.zoom.translate(view.translate).scale(view.scale).event);
+            }
+        }
+
+        toViewport(view, duration, cb) {
+           console.log("tov ", view);
+            if (!isNaN(view.scale) && !isNaN(view.translate[0]) && !isNaN(view.translate[1])) {
+                this.svg.transition()
+                    .duration(duration)
+                    .call(this.zoom.translate(view.translate).scale(view.scale).event);
+                if (cb) {
+                    setTimeout(cb, duration);
+                }
+
             }
         }
 
@@ -351,29 +364,39 @@
             image.src = 'data:image/svg+xml;base64,' + encodedData;
         }
 
-        enterEditMode() {
-           // TODO compute viewport acccording to selected item
-            this.state = LinkedGraphStates.EDIT_ITEM;
-            // this.oldScale = this.scale;
-            // this.scale = 1;
-            // console.log("enterEditMode ", this.scale, this.translate);
-            // if(this.oldScale > 1){
-            //    this.animateViewport({
-            //       translate: this.translate,
-            //       scale: this.scale
-            //    });
-            // }
+        centerOnElement(node, targetScale, cb) {
+            let viewBounds = document.getElementById("board").getBoundingClientRect();
+            let tx = (viewBounds.width) / 2 - node.x * targetScale
+            let ty = (viewBounds.height) / 2 - node.y * targetScale
+            let centerTranslate = [tx, ty];
+            this.prevScale = this.scale;
+            this.prevTranslate = [this.translate[0], this.translate[1]];
+            this.toViewport({
+                translate: centerTranslate,
+                scale: targetScale
+            }, 300, cb);
+        }
+
+        enterEditMode(node, cb) {
+            this.centerOnElement(node, 1, () => {
+               this.state = LinkedGraphStates.EDIT_ITEM;
+               cb();
+            });
         }
 
         exitEditMode() {
-         //   console.log(this.state, " -> ");
-         //   this.scale = this.oldScale;
-         //   this.animateViewport({
-         //     translate: this.translate,
-         //     scale: this.oldScale
-         //   });
-
+            console.log("exit");
             this.state = LinkedGraphStates.IDLE;
+            this.scale = this.prevScale;
+            this.translate = this.prevTranslate;
+            this.toViewport({
+                translate: this.translate,
+                scale: this.scale
+            }, 300, () => {
+               console.log("Done");
+            });
+
+
         }
     }
 </script>

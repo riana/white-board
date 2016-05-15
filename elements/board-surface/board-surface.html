@@ -212,62 +212,73 @@
             _editorStyle(selectedNode) {
                 return selectedNode.type ? selectedNode.type : 'sticky';
             },
-            editNode(node, screenPos) {
+            showStickyNoteEditor(node, screenPos) {
                 this.editing = true;
-                this.linkedGraph.enterEditMode();
                 this.selectedNode = node;
                 this.$.stickEditor.classList.add("visible");
+
+                this.$.stickEditor.style.width = '' + node.width + 'px';
+               //  this.$.stickEditor.style.height = '' + node.height + 'px';
+
 
                 this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = node.style ? node.style.color : "#000000";
                 // this.$.stickTextEditor.getElementsByTagName("textarea")[0].style['font-size'] = '32px';
                 this.$.stickEditor.style.background = node.style ? node.style.background : "white";
 
-                let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
-                let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
-                this.animationConfig['startEditCard'] = {
-                    name: 'transform-animation',
-                    node: this.$.stickEditor,
-                    transformOrigin: '50% 50%',
-                    transformFrom: 'scale(' + scaleX + ',' + scaleY + ')',
-                    transformTo: 'scale(1)',
-                    timing: {
-                        duration: 300
-                    }
-                };
-                this.playAnimation('startEditCard');
+               //  let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
+               //  let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+               //  this.animationConfig['startEditCard'] = {
+               //      name: 'transform-animation',
+               //      node: this.$.stickEditor,
+               //      transformOrigin: '50% 50%',
+               //      transformFrom: 'scale(' + scaleX + ',' + scaleY + ')',
+               //      transformTo: 'scale(1)',
+               //      timing: {
+               //          duration: 300
+               //      }
+               //  };
 
-                let x = screenPos.x - this.$.stickEditor.clientWidth / 2;
-                let y = screenPos.y - this.$.stickEditor.clientHeight / 2;
+
+               //  this.playAnimation('startEditCard');
+
+                let x = (this.$.d3Board.clientWidth - this.$.stickEditor.clientWidth) / 2;
+                let y = (this.$.d3Board.clientHeight - this.$.stickEditor.clientHeight) / 2;
+
                 this.$.stickEditor.style.top = '' + y + 'px';
                 this.$.stickEditor.style.left = '' + x + 'px';
             },
+            editNode(node, screenPos) {
+                this.linkedGraph.enterEditMode(node, () => {
+                    this.showStickyNoteEditor(node, screenPos);
+                });
+            },
             deleteItem(item) {
-               let index = this.data.nodes.indexOf(item);
-               this.data.nodes.splice(index, 1);
-               index = this.data.images.indexOf(item);
-               if (index != -1) {
-                   this.data.images.splice(index, 1);
-                   this.linkedGraph.removeMedia(item);
-                   this.fire("media-removed", item);
-               }
-               index = this.data.zones.indexOf(item);
-               if (index != -1) {
-                  this.data.zones.splice(index, 1);
-               }
+                let index = this.data.nodes.indexOf(item);
+                this.data.nodes.splice(index, 1);
+                index = this.data.images.indexOf(item);
+                if (index != -1) {
+                    this.data.images.splice(index, 1);
+                    this.linkedGraph.removeMedia(item);
+                    this.fire("media-removed", item);
+                }
+                index = this.data.zones.indexOf(item);
+                if (index != -1) {
+                    this.data.zones.splice(index, 1);
+                }
 
-               let links = this.data.links.filter((link) => {
-                   return link.source === item.id || link.target === item.id;
-               });
+                let links = this.data.links.filter((link) => {
+                    return link.source === item.id || link.target === item.id;
+                });
 
-               links.forEach((link) => {
-                   let index = this.data.links.indexOf(link);
-                   this.data.links.splice(index, 1);
-               });
+                links.forEach((link) => {
+                    let index = this.data.links.indexOf(link);
+                    this.data.links.splice(index, 1);
+                });
             },
             stopEditNode() {
                 this.selectedNode.width = this.$.editorContent.clientWidth + 10;
                 this.selectedNode.height = this.$.editorContent.clientHeight + 10;
-               //  this.selectedNode.text = decodeURIComponent(this.selectedNode.text);
+                //  this.selectedNode.text = decodeURIComponent(this.selectedNode.text);
                 this.$.measure.innerHTML = unescape(encodeURIComponent(marked(this.selectedNode.text, {
                     breaks: true,
                     sanitize: true
@@ -277,34 +288,34 @@
                 this.selectedNode.width = rect.width + 20;
                 this.selectedNode.height = rect.height + 20;
                 this.linkedGraph.updateGraph(this.data);
-this.linkedGraph.exitEditMode();
+                this.linkedGraph.exitEditMode();
 
 
 
-                let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
-                let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
-                this.animationConfig['startEditCard'] = [{
-                    name: 'transform-animation',
-                    node: this.$.stickEditor,
-                    transformOrigin: '50% 50%',
-                    transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
-                    transformFrom: 'scale(1)',
-                    timing: {
-                        duration: 300
-                    }
-                }, {
-                    name: 'fade-out-animation',
-                    node: this.$.stickEditor,
-                    timing: {
-                        delay: 150,
-                        duration: 200
-                    }
-                }];
-                this.playAnimation('startEditCard');
-                this.debounce("stop", () => {
+               //  let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
+               //  let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+               //  this.animationConfig['startEditCard'] = [{
+               //      name: 'transform-animation',
+               //      node: this.$.stickEditor,
+               //      transformOrigin: '50% 50%',
+               //      transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
+               //      transformFrom: 'scale(1)',
+               //      timing: {
+               //          duration: 300
+               //      }
+               //  }, {
+               //      name: 'fade-out-animation',
+               //      node: this.$.stickEditor,
+               //      timing: {
+               //          delay: 150,
+               //          duration: 200
+               //      }
+               //  }];
+               //  this.playAnimation('startEditCard');
+               //  this.debounce("stop", () => {
                     this.editing = false;
                     this.$.stickEditor.classList.remove("visible");
-                }, 300);
+               //  }, 300);
             },
             getPositionOnBoard(x, y) {
                 let pos = this.linkedGraph.getDiagramCoords(x, y);
