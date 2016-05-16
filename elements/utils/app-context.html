@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="app-context">
+
+  <template>
+    <style is="custom-style">
+      :host {
+        display: block;
+      }
+    </style>
+
+    <!--Template goes here-->
+
+  </template>
+
+  <script type="text/javascript" src="./AppContext.js"></script>
+  <script>
+    "use strict";
+    Polymer({
+      is: "app-context",
+      properties: {
+        key: {
+          type: String,
+          observer: '_keyChanged'
+        },
+        value: {
+          type: Object,
+          notify: true
+        }
+      },
+      _keyChanged() {
+        if (this.key) {
+          let context = this.getContext()
+          this.value = context.getValue(this.key);
+          context.listen(this.key, (newValue, old) => {
+            this.set("value", newValue);
+          });
+        }
+
+      },
+      update(value) {
+
+        if (this.key) {
+          this.value = value;
+          let context = this.getContext();
+          context.setValue(this.key, this.value);
+        }
+      },
+      getContext() {
+        return GlobalAppContext;
+      }
+    });
+  </script>
+
+</dom-module>
