@@ -207,6 +207,8 @@
                 newNode.width = defaultHeight;
                 newNode.height = 39;
 
+                this.$.board.updateNodeBounds(newNode);
+
                 this.boardContent.nodes.push(newNode);
                 this.$.board._dataUpdated();
 

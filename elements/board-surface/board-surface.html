@@ -275,22 +275,26 @@
                     this.data.links.splice(index, 1);
                 });
             },
-            stopEditNode() {
-                this.selectedNode.width = this.$.editorContent.clientWidth + 10;
-                this.selectedNode.height = this.$.editorContent.clientHeight + 10;
-                //  this.selectedNode.text = decodeURIComponent(this.selectedNode.text);
-                this.$.measure.innerHTML = unescape(encodeURIComponent(marked(this.selectedNode.text, {
-                    breaks: true,
-                    sanitize: true
-                })));
 
-                let rect = this.$.measure.getBoundingClientRect();
-                this.selectedNode.width = rect.width + 20;
-                this.selectedNode.height = rect.height + 20;
+            updateNodeBounds(node){
+               this.$.measure.innerHTML = unescape(encodeURIComponent(marked(node.text, {
+                   breaks: true,
+                   sanitize: true
+               })));
+
+               let rect = this.$.measure.getBoundingClientRect();
+               node.width = rect.width + 20;
+               node.height = rect.height + 20;
+            },
+
+            stopEditNode() {
+                  this.updateNodeBounds(this.selectedNode);
+
+
                 this.linkedGraph.updateGraph(this.data);
                 this.linkedGraph.exitEditMode();
 
-
+//  this.selectedNode.text = decodeURIComponent(this.selectedNode.text);
 
                //  let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
                //  let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
