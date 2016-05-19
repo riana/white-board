@@ -88,7 +88,7 @@
             self.translate = [0, 0];
 
             function zoomed() {
-                if (self.state === LinkedGraphStates.IDLE) {
+                if (self.state === LinkedGraphStates.IDLE || self.animatedPan) {
                     self.container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
                     self.scale = d3.event.scale;
                     self.translate = d3.event.translate;
@@ -230,7 +230,7 @@
         }
 
         onItemClicked(d) {
-            if (this.onNodeClicked && this.state === LinkedGraphStates.IDLE) {
+            if (this.onNodeClicked) {
                 let screenPos = getScreenCoords(d.x, d.y, this.translate, this.scale);
                 this.onNodeClicked(d, screenPos);
             }
@@ -280,12 +280,16 @@
         }
 
         toViewport(view, duration, cb) {
+            this.animatedPan = true;
             if (!isNaN(view.scale) && !isNaN(view.translate[0]) && !isNaN(view.translate[1])) {
                 this.svg.transition()
                     .duration(duration)
                     .call(this.zoom.translate(view.translate).scale(view.scale).event);
                 if (cb) {
-                    setTimeout(cb, duration);
+                    setTimeout(() => {
+                       this.animatedPan = false,
+                       cb();
+                    }, duration);
                 }
 
             }
@@ -364,11 +368,13 @@
 
         centerOnElement(node, targetScale, cb) {
             let viewBounds = document.getElementById("board").getBoundingClientRect();
-            let tx = (viewBounds.width) / 2 - node.x * targetScale
-            let ty = (viewBounds.height) / 2 - node.y * targetScale
+            let tx = (viewBounds.width) / 2 - node.x * targetScale;
+            let ty = (viewBounds.height) / 2 - node.y * targetScale;
             let centerTranslate = [tx, ty];
-            this.prevScale = this.scale;
-            this.prevTranslate = [this.translate[0], this.translate[1]];
+            if(this.state !== LinkedGraphStates.EDIT_ITEM){
+               this.prevScale = this.scale;
+               this.prevTranslate = [this.translate[0], this.translate[1]];
+            }
             this.toViewport({
                 translate: centerTranslate,
                 scale: targetScale

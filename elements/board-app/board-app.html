@@ -195,26 +195,22 @@
             },
             _addNode(newNode, e) {
 
-                let defaultWidth = 80;
-                let defaultHeight = 80;
-
                 let pos = this.$.board.getPositionOnBoard(e.detail.x, e.detail.y);
 
                 newNode.id = UUID.generate();
                 newNode.text = "Put your text here";
-                newNode.x = pos.x - (defaultWidth / 2);
-                newNode.y = pos.y - (defaultHeight / 2);
-                newNode.width = defaultHeight;
-                newNode.height = 39;
 
                 this.$.board.updateNodeBounds(newNode);
+
+                newNode.x = pos.x - (newNode.width / 2);
+                newNode.y = pos.y - (newNode.height / 2);
 
                 this.boardContent.nodes.push(newNode);
                 this.$.board._dataUpdated();
 
                 this.$.board.editNode(newNode, {
-                    x: e.detail.x - (defaultWidth / 2),
-                    y: e.detail.y - (defaultHeight / 2)
+                    x: e.detail.x - (newNode.width / 2),
+                    y: e.detail.y - (newNode.height / 2)
                 });
             },
             _onDropStick(e) {

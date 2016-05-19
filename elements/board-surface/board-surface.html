@@ -196,6 +196,7 @@
                 };
 
                 this.linkedGraph.onNodeClicked = (node, screenPos) => {
+                    console.log("this.linkedGraph.onNodeClicked");
                     this.editNode(node, screenPos);
                 }
                 this.linkedGraph.setData(this.data);
@@ -218,28 +219,28 @@
                 this.$.stickEditor.classList.add("visible");
 
                 this.$.stickEditor.style.width = '' + node.width + 'px';
-               //  this.$.stickEditor.style.height = '' + node.height + 'px';
+                //  this.$.stickEditor.style.height = '' + node.height + 'px';
 
 
                 this.$.stickTextEditor.getElementsByTagName("textarea")[0].style.color = node.style ? node.style.color : "#000000";
                 // this.$.stickTextEditor.getElementsByTagName("textarea")[0].style['font-size'] = '32px';
                 this.$.stickEditor.style.background = node.style ? node.style.background : "white";
 
-               //  let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
-               //  let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
-               //  this.animationConfig['startEditCard'] = {
-               //      name: 'transform-animation',
-               //      node: this.$.stickEditor,
-               //      transformOrigin: '50% 50%',
-               //      transformFrom: 'scale(' + scaleX + ',' + scaleY + ')',
-               //      transformTo: 'scale(1)',
-               //      timing: {
-               //          duration: 300
-               //      }
-               //  };
+                //  let scaleX = node.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
+                //  let scaleY = node.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+                //  this.animationConfig['startEditCard'] = {
+                //      name: 'transform-animation',
+                //      node: this.$.stickEditor,
+                //      transformOrigin: '50% 50%',
+                //      transformFrom: 'scale(' + scaleX + ',' + scaleY + ')',
+                //      transformTo: 'scale(1)',
+                //      timing: {
+                //          duration: 300
+                //      }
+                //  };
 
 
-               //  this.playAnimation('startEditCard');
+                //  this.playAnimation('startEditCard');
 
                 let x = (this.$.d3Board.clientWidth - this.$.stickEditor.clientWidth) / 2;
                 let y = (this.$.d3Board.clientHeight - this.$.stickEditor.clientHeight) / 2;
@@ -248,6 +249,11 @@
                 this.$.stickEditor.style.left = '' + x + 'px';
             },
             editNode(node, screenPos) {
+                if (this.editing) {
+                   this.updateNodeBounds(this.selectedNode);
+                   this.linkedGraph.updateGraph(this.data);
+                   this.$.stickEditor.classList.remove("visible");
+                }
                 this.linkedGraph.enterEditMode(node, () => {
                     this.showStickyNoteEditor(node, screenPos);
                 });
@@ -276,50 +282,48 @@
                 });
             },
 
-            updateNodeBounds(node){
-               this.$.measure.innerHTML = unescape(encodeURIComponent(marked(node.text, {
-                   breaks: true,
-                   sanitize: true
-               })));
+            updateNodeBounds(node) {
+                this.$.measure.innerHTML = unescape(encodeURIComponent(marked(node.text, {
+                    breaks: true,
+                    sanitize: true
+                })));
 
-               let rect = this.$.measure.getBoundingClientRect();
-               node.width = rect.width + 20;
-               node.height = rect.height + 20;
+                let rect = this.$.measure.getBoundingClientRect();
+                node.width = rect.width + 20;
+                node.height = rect.height + 20;
             },
 
             stopEditNode() {
-                  this.updateNodeBounds(this.selectedNode);
-
-
-                this.linkedGraph.updateGraph(this.data);
+               this.updateNodeBounds(this.selectedNode);
+               this.linkedGraph.updateGraph(this.data);
                 this.linkedGraph.exitEditMode();
 
-//  this.selectedNode.text = decodeURIComponent(this.selectedNode.text);
+                //  this.selectedNode.text = decodeURIComponent(this.selectedNode.text);
 
-               //  let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
-               //  let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
-               //  this.animationConfig['startEditCard'] = [{
-               //      name: 'transform-animation',
-               //      node: this.$.stickEditor,
-               //      transformOrigin: '50% 50%',
-               //      transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
-               //      transformFrom: 'scale(1)',
-               //      timing: {
-               //          duration: 300
-               //      }
-               //  }, {
-               //      name: 'fade-out-animation',
-               //      node: this.$.stickEditor,
-               //      timing: {
-               //          delay: 150,
-               //          duration: 200
-               //      }
-               //  }];
-               //  this.playAnimation('startEditCard');
-               //  this.debounce("stop", () => {
-                    this.editing = false;
-                    this.$.stickEditor.classList.remove("visible");
-               //  }, 300);
+                //  let scaleX = this.selectedNode.width * this.linkedGraph.scale / this.$.stickEditor.clientWidth;
+                //  let scaleY = this.selectedNode.height * this.linkedGraph.scale / this.$.stickEditor.clientHeight;
+                //  this.animationConfig['startEditCard'] = [{
+                //      name: 'transform-animation',
+                //      node: this.$.stickEditor,
+                //      transformOrigin: '50% 50%',
+                //      transformTo: 'scale(' + scaleX + ',' + scaleY + ')',
+                //      transformFrom: 'scale(1)',
+                //      timing: {
+                //          duration: 300
+                //      }
+                //  }, {
+                //      name: 'fade-out-animation',
+                //      node: this.$.stickEditor,
+                //      timing: {
+                //          delay: 150,
+                //          duration: 200
+                //      }
+                //  }];
+                //  this.playAnimation('startEditCard');
+                //  this.debounce("stop", () => {
+                this.editing = false;
+                this.$.stickEditor.classList.remove("visible");
+                //  }, 300);
             },
             getPositionOnBoard(x, y) {
                 let pos = this.linkedGraph.getDiagramCoords(x, y);
