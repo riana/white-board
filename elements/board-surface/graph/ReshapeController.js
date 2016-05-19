@@ -122,12 +122,12 @@ class ReshapeController {
 			})
 			.attr('cy', (d) => {
 				return this.selectedImage ? this.selectedImage.y + this.selectedImage.height + 4 : 0;
-			})
+			});
 
 		let rotateHandleCenter = {
 			x: this.selectedImage ? this.selectedImage.x + this.selectedImage.width / 2 : 0,
 			y: this.selectedImage ? this.selectedImage.y + this.selectedImage.height : 0
-		}
+		};
 
 		this.controlLayer.selectAll('#rotateLine')
 			.attr("x1", () => {
@@ -143,14 +143,14 @@ class ReshapeController {
 				return rotateHandleCenter.y + 40;
 			})
          .attr("visibility", () => {
-				return this.selectedImage && this.selectedImage.rotation ? "visible" : "hidden";
+				return this.selectedImage && typeof this.selectedImage.rotation !== 'undefined' ? "visible" : "hidden";
 			});
 
 		this.controlLayer.selectAll('#rotateCircle')
 			.attr('cx', rotateHandleCenter.x)
 			.attr('cy', rotateHandleCenter.y + 40)
 			.attr("visibility", () => {
-				return this.selectedImage && this.selectedImage.rotation ? "visible" : "hidden";
+				return this.selectedImage && typeof this.selectedImage.rotation !== 'undefined' ? "visible" : "hidden";
 			});
 	}
 

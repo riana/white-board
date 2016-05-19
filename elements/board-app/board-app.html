@@ -150,6 +150,10 @@
                         data.zones = [];
                     }
                     data.images.forEach(image => {
+                       if(!image.rotation){
+                          image.rotation = 0;
+                       }
+                       console.log(image);
                         this.$.storage.getImage(data.id, image, (resp) => {
                             console.log("#image loaded : ", typeof(resp));
                             let content = resp;
