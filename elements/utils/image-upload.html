@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../../bower_components/iron-image/iron-image.html">
+<dom-module id="image-upload">
+
+  <template>
+    <style is="custom-style" include="iron-flex iron-flex-alignment">
+      :host {
+        display: block;
+      }
+
+      #imageHolder {
+        width: 100%;
+        height: 100%;
+      }
+
+      #fileSelector {
+         visibility: hidden;
+         pointer-events: none;
+      }
+    </style>
+
+    <!--Template goes here-->
+    <input id="fileSelector" type="file" on-change="_fileSelected">
+    <iron-image id="imageHolder" src="[[_getImage(image, defaultImage)]]" sizing="contain" on-tap="_selectImage" on-drop="_handleDrop"></iron-image>
+  </template>
+
+  <script>
+    "use strict";
+    Polymer({
+      is: "image-upload",
+      properties: {
+        image: {
+          type: String,
+          value: ""
+        },
+        defaultImage: {
+          type: String
+        }
+      },
+      attached() {
+        this.$.imageHolder.ondragover = (e) => {
+          return false;
+        };
+      },
+      _getImage(image, defaultImage) {
+        return image && image.length !== 0 ? image : this.defaultImage;
+      },
+      _selectImage() {
+         this.$.fileSelector.click();
+      },
+      _fileSelected(e) {
+        let file = this.$.fileSelector.files[0];
+        this.handleFile(file);
+      },
+      _handleDrop(e) {
+        e.preventDefault();
+        var file = e.dataTransfer.files[0];
+        this.handleFile(file);
+      },
+      handleFile(file){
+         this.loadImage(file);
+         this.fire('image-selected', file);
+      },
+      loadImage(file) {
+        let reader = new FileReader();
+
+        reader.onload = (event) => {
+          let imageData = event.target.result;
+          var img = new Image;
+          img.onload = () => {
+            this.image = imageData;
+          };
+          img.src = imageData;
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
+
+</dom-module>
