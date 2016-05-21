@@ -177,28 +177,32 @@
 
             this.drag = d3.behavior.drag()
                 .on("drag", function(d, i) {
-                    d.x += d3.event.dx;
-                    d.y += d3.event.dy;
-                    self.lastDrag = {
-                        x: d3.event.x,
-                        y: d3.event.y
-                    }
+                    if (self.state !== LinkedGraphStates.EDIT_ITEM) {
+                        d.x += d3.event.dx;
+                        d.y += d3.event.dy;
+                        self.lastDrag = {
+                            x: d3.event.x,
+                            y: d3.event.y
+                        }
 
-                    self.updateGraph(self.data);
+                        self.updateGraph(self.data);
 
-                    if (self.onDragItem) {
-                        let coords = getScreenCoords(d3.event.x, d3.event.y, self.translate, self.scale);
-                        self.onDragItem(coords,
-                            d);
+                        if (self.onDragItem) {
+                            let coords = getScreenCoords(d3.event.x, d3.event.y, self.translate, self.scale);
+                            self.onDragItem(coords,
+                                d);
+                        }
+                        d3.event.sourceEvent.stopPropagation();
                     }
-                    d3.event.sourceEvent.stopPropagation();
                 })
                 .on('dragstart', function(d, i) {
-                    setTimeout(() => {
-                        self.previousState = self.state;
-                        self.state = LinkedGraphStates.DRAGGING_ITEM;
-                    }, 300);
-                    d3.event.sourceEvent.stopPropagation();
+                    if (self.state !== LinkedGraphStates.EDIT_ITEM) {
+                        setTimeout(() => {
+                            self.previousState = self.state;
+                            self.state = LinkedGraphStates.DRAGGING_ITEM;
+                        }, 300);
+                        d3.event.sourceEvent.stopPropagation();
+                    }
                 })
                 .on('dragend', function(d, i) {
                     if (self.state === LinkedGraphStates.DRAGGING_ITEM && self.onDragItemEnd && self.lastDrag) {
@@ -206,22 +210,26 @@
                         self.onDragItemEnd(coords,
                             d);
                     }
-                    setTimeout(() => {
-                        // self.state = LinkedGraphStates.IDLE;
-                        self.state = self.previousState;
-                    }, 300);
+                    if (self.state !== LinkedGraphStates.EDIT_ITEM) {
+                        setTimeout(() => {
+                            // self.state = LinkedGraphStates.IDLE;
+                            self.state = self.previousState;
+                        }, 300);
 
-                    // d3.event.stopPropagation();
-                    // console.log(d3.event);
-                    d3.event.sourceEvent.stopPropagation();
+                        // d3.event.stopPropagation();
+                        // console.log(d3.event);
+                        d3.event.sourceEvent.stopPropagation();
+                    }
 
                 });
             this.data = {}
         }
 
         startReshape(item) {
-            this.reshapeController.selectedImage = item;
-            this.reshapeController.update(this.data);
+            if (this.state !== LinkedGraphStates.EDIT_ITEM) {
+                this.reshapeController.selectedImage = item;
+                this.reshapeController.update(this.data);
+            }
         }
 
         cancelReshape() {
@@ -287,8 +295,8 @@
                     .call(this.zoom.translate(view.translate).scale(view.scale).event);
                 if (cb) {
                     setTimeout(() => {
-                       this.animatedPan = false,
-                       cb();
+                        this.animatedPan = false,
+                            cb();
                     }, duration);
                 }
 
@@ -371,9 +379,9 @@
             let tx = (viewBounds.width) / 2 - node.x * targetScale;
             let ty = (viewBounds.height) / 2 - node.y * targetScale;
             let centerTranslate = [tx, ty];
-            if(this.state !== LinkedGraphStates.EDIT_ITEM){
-               this.prevScale = this.scale;
-               this.prevTranslate = [this.translate[0], this.translate[1]];
+            if (this.state !== LinkedGraphStates.EDIT_ITEM) {
+                this.prevScale = this.scale;
+                this.prevTranslate = [this.translate[0], this.translate[1]];
             }
             this.toViewport({
                 translate: centerTranslate,
@@ -383,8 +391,8 @@
 
         enterEditMode(node, cb) {
             this.centerOnElement(node, 1, () => {
-               this.state = LinkedGraphStates.EDIT_ITEM;
-               cb();
+                this.state = LinkedGraphStates.EDIT_ITEM;
+                cb();
             });
         }
 
@@ -395,8 +403,7 @@
             this.toViewport({
                 translate: this.translate,
                 scale: this.scale
-            }, 300, () => {
-            });
+            }, 300, () => {});
 
 
         }
