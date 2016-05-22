@@ -19,7 +19,6 @@
 
 <script type="text/javascript" src="../../../bower_components/marked/marked.min.js"></script>
 <link rel="stylesheet" title="Default" href="../../../bower_components/highlightjs/styles/default.css">
-<!-- <link rel="stylesheet" title="Default" href="../../bower_components/highlightjs/styles/dracula.css"> -->
 <script type="text/javascript" src="../../../bower_components/highlightjs/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
@@ -138,8 +137,6 @@
                         self.cancelReshape();
                         self.onBoardClicked(d3.event, coords);
                     }
-
-                    // console.log("touch end on board : ", dt);
                 });
 
             var filter = this.svg.append("filter")
@@ -212,12 +209,8 @@
                     }
                     if (self.state !== LinkedGraphStates.EDIT_ITEM) {
                         setTimeout(() => {
-                            // self.state = LinkedGraphStates.IDLE;
                             self.state = self.previousState;
                         }, 300);
-
-                        // d3.event.stopPropagation();
-                        // console.log(d3.event);
                         d3.event.sourceEvent.stopPropagation();
                     }
 
@@ -367,7 +360,6 @@
                 cb(screenShot);
             };
             image.onerror = function(e) {
-                // TODO Handle screenshot creation error due to special characters
                 console.error("Error building screenShot ... done");
             };
 
