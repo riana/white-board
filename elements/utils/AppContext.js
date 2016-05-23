@@ -1,6 +1,6 @@
 //jshint esversion: 6
 
-class AppContext {
+AppContext = {
 
   constructor() {
     this.globals = [];
@@ -25,7 +25,6 @@ class AppContext {
      listener(value, oldValue);
     }
   }
-};
+}
 
-// FIXME use window globals
-var GlobalAppContext = new AppContext();
+window.AppContext = window.AppContext || AppContext;
