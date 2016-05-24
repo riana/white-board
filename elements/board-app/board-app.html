@@ -44,6 +44,17 @@
             .mode-button.enabled {
                 color: var(--paper-blue-500);
             }
+
+            #visualLibrary {
+                position: absolute;
+                width: 120px;
+                background: var(--paper-blue-500);
+                transition: width ease-out 0.3;
+            }
+
+            #visualLibrary.visible {
+                transition: width ease-in 0.3;
+            }
         </style>
 
         <board-storage id="storage" on-loaded="_loaded" on-storage-ready="_storageReady" board-index="{{boardsIndex}}"></board-storage>
@@ -54,7 +65,7 @@
 
                 <div class="controls-container">
                     <fa-button class$="mode-button [[_isEnabledStyle(currentMode, 'DRAW_RECT')]]" icon="fa-mouse-pointer" on-tap="_toggleDrawRectMode"></fa-button>
-                    <fa-button icon="fa-image" on-tap="_insertImage"></fa-button>
+                    <fa-button class$="mode-button [[_isVisualLibraryVisible(visualLibraryVisible)]]" icon="fa-image" on-tap="_showVisualLibrary"></fa-button>
                 </div>
 
                 <fa-button icon="fa-font" draggable="true" on-track="_onDropText"></fa-button>
@@ -64,6 +75,7 @@
                     </paper-material>
                 </template>
             </div>
+            <visual-library id="visualLibrary"></visual-library>
             <board-surface id="board" class="flex" data="{{boardContent}}" on-drop="_handleDrop" on-media-removed="_mediaRemoved"></board-surface>
             <viewport-list id="viewportList" board-content="{{boardContent}}" on-restore-viewport="_restoreViewport"></viewport-list>
         </div>
@@ -150,10 +162,10 @@
                         data.zones = [];
                     }
                     data.images.forEach(image => {
-                       if(!image.rotation){
-                          image.rotation = 0;
-                       }
-                       console.log(image);
+                        if (!image.rotation) {
+                            image.rotation = 0;
+                        }
+                        console.log(image);
                         this.$.storage.getImage(data.id, image, (resp) => {
                             console.log("#image loaded : ", typeof(resp));
                             let content = resp;
@@ -236,8 +248,22 @@
             _getAddStickStyle(stickStyle) {
                 return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
             },
-            _insertImage() {
-                console.log("_insertImage");
+            _showVisualLibrary() {
+
+               let bounds = this.$.controlBar.getBoundingClientRect();
+                if (this.visualLibraryVisible) {
+                    this.$.visualLibrary.style.width = '0px';
+                    this.visualLibraryVisible = false;
+                } else {
+                   this.$.visualLibrary.style.width = '120px';
+                   this.$.visualLibrary.style.top = `${bounds.top}px`;
+                   this.$.visualLibrary.style.left = `${bounds.width}px`;
+                   this.$.visualLibrary.style.height = `${bounds.height - 200}px`;
+                    this.visualLibraryVisible = true;
+                }
+
+
+
             },
             _handleDrop(e) {
                 e.preventDefault();
@@ -311,6 +337,9 @@
             },
             _isEnabledStyle(currentMode, mode) {
                 return currentMode === mode ? 'enabled' : '';
+            },
+            _isVisualLibraryVisible(visualLibraryVisible) {
+                return visualLibraryVisible ? 'enabled' : '';
             }
         });
     </script>
