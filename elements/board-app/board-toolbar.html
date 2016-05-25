@@ -32,7 +32,15 @@
             }
 
             .right-container {
-               margin-right: 20px;
+                margin-right: 20px;
+            }
+
+            fa-button > * {
+                pointer-events: none;
+            }
+
+            .mode-button.enabled {
+                color: var(--paper-blue-500);
             }
         </style>
 
@@ -44,7 +52,8 @@
             <paper-icon-button icon="folder-open" on-tap="_open"></paper-icon-button>
             <div class="flex"></div>
             <div class="right-container layout horizontal center">
-               <paper-icon-button icon="av:videocam" on-tap="_toggleViewportList"></paper-icon-button>
+                <fa-button mode="viewportList" class$="mode-button [[_activeStyle(mode, 'viewportList')]]" icon="fa-image" on-tap="_changeMode"></fa-button>
+                <fa-button mode="visualLibrary" class$="mode-button [[_activeStyle(mode, 'visualLibrary')]]" icon="fa-video-camera" on-tap="_changeMode"></fa-button>
             </div>
         </div>
     </template>
@@ -58,6 +67,9 @@
                     type: String,
                     value: '',
                     notify: true
+                },
+                mode: {
+                    type: String
                 }
             },
             _save() {
@@ -69,8 +81,18 @@
             _create() {
                 this.fire('create');
             },
-            _toggleViewportList(){
-               this.fire('viewport-list');
+            _toggleViewportList() {
+                this.fire('viewport-list');
+            },
+            _activeStyle(mode, item) {
+                return mode === item ? 'enabled' : '';
+            },
+            _changeMode(e) {
+               let element = e.target.parentElement.attributes['mode'];
+               if(element){
+                  this.mode = element.value;
+                  this.fire('inspector-changed', this.mode);
+               }
             }
         });
     </script>

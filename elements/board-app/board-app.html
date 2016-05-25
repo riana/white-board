@@ -59,13 +59,12 @@
 
         <board-storage id="storage" on-loaded="_loaded" on-storage-ready="_storageReady" board-index="{{boardsIndex}}"></board-storage>
 
-        <board-toolbar title="{{boardContent.title}}" on-save="_save" on-open="_open" on-create="_createBoard" on-viewport-list="_toggleViewportList"></board-toolbar>
+        <board-toolbar title="{{boardContent.title}}" on-save="_save" on-open="_open" on-create="_createBoard" on-inspector-changed="_inspectorChanged"></board-toolbar>
         <div class="layout horizontal flex">
             <div id="controlBar" class="layout vertical center">
 
                 <div class="controls-container">
                     <fa-button class$="mode-button [[_isEnabledStyle(currentMode, 'DRAW_RECT')]]" icon="fa-mouse-pointer" on-tap="_toggleDrawRectMode"></fa-button>
-                    <fa-button class$="mode-button [[_isVisualLibraryVisible(visualLibraryVisible)]]" icon="fa-image" on-tap="_showVisualLibrary"></fa-button>
                 </div>
 
                 <fa-button icon="fa-font" draggable="true" on-track="_onDropText"></fa-button>
@@ -165,9 +164,7 @@
                         if (!image.rotation) {
                             image.rotation = 0;
                         }
-                        console.log(image);
                         this.$.storage.getImage(data.id, image, (resp) => {
-                            console.log("#image loaded : ", typeof(resp));
                             let content = resp;
                             this.$.board.addMedia(image.id, content);
 
@@ -309,7 +306,10 @@
             _storageReady() {
 
             },
-            _toggleViewportList() {
+            _inspectorChanged(e) {
+               console.log("_inspectorChanged => ", e.detail);
+               this.visualLibraryVisible = e.detail === "visualLibrary";
+               this._showVisualLibrary();
 
             },
             _restoreViewport(e) {
@@ -337,9 +337,6 @@
             },
             _isEnabledStyle(currentMode, mode) {
                 return currentMode === mode ? 'enabled' : '';
-            },
-            _isVisualLibraryVisible(visualLibraryVisible) {
-                return visualLibraryVisible ? 'enabled' : '';
             }
         });
     </script>
