@@ -52,8 +52,8 @@
             <paper-icon-button icon="folder-open" on-tap="_open"></paper-icon-button>
             <div class="flex"></div>
             <div class="right-container layout horizontal center">
-                <fa-button mode="viewportList" class$="mode-button [[_activeStyle(mode, 'viewportList')]]" icon="fa-image" on-tap="_changeMode"></fa-button>
-                <fa-button mode="visualLibrary" class$="mode-button [[_activeStyle(mode, 'visualLibrary')]]" icon="fa-video-camera" on-tap="_changeMode"></fa-button>
+                <fa-button mode="viewportList" class$="mode-button [[_activeStyle(mode, 'viewportList')]]" icon="fa-video-camera" on-tap="_changeMode"></fa-button>
+                <fa-button mode="visualLibrary" class$="mode-button [[_activeStyle(mode, 'visualLibrary')]]" icon="fa-image" on-tap="_changeMode"></fa-button>
             </div>
         </div>
     </template>
@@ -88,11 +88,15 @@
                 return mode === item ? 'enabled' : '';
             },
             _changeMode(e) {
-               let element = e.target.parentElement.attributes['mode'];
-               if(element){
-                  this.mode = element.value;
-                  this.fire('inspector-changed', this.mode);
-               }
+                let element = e.target.parentElement.attributes['mode'];
+                if (element) {
+                    if (this.mode === element.value) {
+                        this.mode = '';
+                    } else {
+                        this.mode = element.value;
+                    }
+                    this.fire('inspector-changed', this.mode);
+                }
             }
         });
     </script>

@@ -6,7 +6,7 @@
 
 <link rel="import" href="./board-selector.html">
 <link rel="import" href="./viewport-list.html">
-
+<link rel="import" href="./visual-library.html">
 
 
 <link rel="import" href="../board-surface/board-surface.html">
@@ -46,14 +46,13 @@
             }
 
             #visualLibrary {
-                position: absolute;
-                width: 120px;
                 background: var(--paper-blue-500);
-                transition: width ease-out 0.3;
             }
 
-            #visualLibrary.visible {
-                transition: width ease-in 0.3;
+            #viewportList {}
+
+            #inspector {
+                width: 272px;
             }
         </style>
 
@@ -74,9 +73,12 @@
                     </paper-material>
                 </template>
             </div>
-            <visual-library id="visualLibrary"></visual-library>
+
             <board-surface id="board" class="flex" data="{{boardContent}}" on-drop="_handleDrop" on-media-removed="_mediaRemoved"></board-surface>
-            <viewport-list id="viewportList" board-content="{{boardContent}}" on-restore-viewport="_restoreViewport"></viewport-list>
+            <neon-animated-pages id="inspector" attr-for-selected="id" selected="{{currentInspector}}">
+                <viewport-list id="viewportList" board-content="{{boardContent}}" on-restore-viewport="_restoreViewport"></viewport-list>
+                <visual-library id="visualLibrary"></visual-library>
+            </neon-animated-pages>
         </div>
         <backdrop-view id="loadDialog">
             <board-selector boards="[[boardsIndex]]" on-load="_loadBoard" on-delete="_delete"></board-selector>
@@ -137,6 +139,9 @@
                 currentMode: {
                     type: String,
                     value: 'IDLE'
+                },
+                currentInspector: {
+                    type: String
                 }
             },
             attached() {
@@ -245,23 +250,23 @@
             _getAddStickStyle(stickStyle) {
                 return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
             },
-            _showVisualLibrary() {
-
-               let bounds = this.$.controlBar.getBoundingClientRect();
-                if (this.visualLibraryVisible) {
-                    this.$.visualLibrary.style.width = '0px';
-                    this.visualLibraryVisible = false;
-                } else {
-                   this.$.visualLibrary.style.width = '120px';
-                   this.$.visualLibrary.style.top = `${bounds.top}px`;
-                   this.$.visualLibrary.style.left = `${bounds.width}px`;
-                   this.$.visualLibrary.style.height = `${bounds.height - 200}px`;
-                    this.visualLibraryVisible = true;
-                }
-
-
-
-            },
+            // _showVisualLibrary() {
+            //
+            //     let bounds = this.$.controlBar.getBoundingClientRect();
+            //     if (this.visualLibraryVisible) {
+            //         this.$.visualLibrary.style.width = '0px';
+            //         this.visualLibraryVisible = false;
+            //     } else {
+            //         this.$.visualLibrary.style.width = '120px';
+            //         this.$.visualLibrary.style.top = `${bounds.top}px`;
+            //         this.$.visualLibrary.style.left = `${bounds.width}px`;
+            //         this.$.visualLibrary.style.height = `${bounds.height - 200}px`;
+            //         this.visualLibraryVisible = true;
+            //     }
+            //
+            //
+            //
+            // },
             _handleDrop(e) {
                 e.preventDefault();
                 var file = e.dataTransfer.files[0],
@@ -307,10 +312,12 @@
 
             },
             _inspectorChanged(e) {
-               console.log("_inspectorChanged => ", e.detail);
-               this.visualLibraryVisible = e.detail === "visualLibrary";
-               this._showVisualLibrary();
-
+                if (e.detail.length !== 0) {
+                   this.$.inspector.hidden = false;
+                    this.currentInspector = e.detail;
+                } else {
+                   this.$.inspector.hidden = true;
+                }
             },
             _restoreViewport(e) {
                 this.$.board.animateViewport(e.detail);
