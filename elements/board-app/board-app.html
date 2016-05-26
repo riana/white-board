@@ -146,6 +146,7 @@
             },
             attached() {
                 // this.$.storage.load(selected);
+                this.$.inspector.hidden = true;
                 this.$.board.ondragover = (e) => {
                     this._dragOver(e)
                     return false;
