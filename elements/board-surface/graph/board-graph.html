@@ -325,12 +325,15 @@
             this.state = LinkedGraphStates.DRAW_RECT;
         }
 
-        exitDrawRectMode() {
+        cancelDrawRectMode() {
             this.state = LinkedGraphStates.IDLE;
             if (this.onStateChanged) {
                 this.onStateChanged(this.state);
             }
+        }
 
+        exitDrawRectMode() {
+            this.cancelDrawRectMode();
             if (this.onDrawRectComplete) {
                 this.onDrawRectComplete(this.drawRectController.drawingRect);
             }
