@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="stylesheet" media="all" href="../../bower_components/mocha/mocha.css">
+<script src="../../bower_components/mocha/mocha.js"></script>
+<script src="../../bower_components/chai/chai.js"></script>
+
+<style>
+#mocha-stats {
+   position: absolute;
+   max-width: 300px;
+   right: 0;
+
+}
+
+</style>
+<dom-module id="unit-tests">
+
+    <template>
+        <style is="custom-style">
+            :host {
+                display: block;
+                position: relative;
+            }
+        </style>
+        <div id="mocha">
+        </div>
+        <div id="messages"></div>
+        <div id="fixtures"></div>
+        <content id="content"></content>
+    </template>
+
+
+    <script>
+        let expect = chai.expect;
+        "use strict";
+        Polymer({
+            is: "unit-tests",
+            refresh() {
+               this.debounce("run", ()=> {
+                  this.run();
+               }, 300);
+            },
+            run() {
+                mocha.setup('bdd');
+                let distributedNodes = Polymer.dom(this.$.content).getDistributedNodes();
+                for (let node of distributedNodes) {
+                    if (node.fixture) {
+                        node.fixture();
+                    }
+                };
+                mocha.run();
+            }
+        });
+    </script>
+
+</dom-module>

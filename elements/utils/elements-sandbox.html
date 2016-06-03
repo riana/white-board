@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+
+<script src="../../bower_components/crossroads/dev/lib/signals.js"></script>
+<script src="../../bower_components/hasher/dist/js/hasher.js"></script>
+<script src="../../bower_components/crossroads/dist/crossroads.js"></script>
+
+<dom-module id="elements-sandbox">
+
+  <template>
+    <style is="custom-style" include="iron-flex iron-flex-alignment">
+      :host {
+        display: block;
+      }
+
+      paper-item > * {
+        pointer-events: none;
+      }
+
+      #header {
+        background: var(--paper-grey-900);
+        color: var(--paper-grey-50);
+      }
+
+      #title {
+        margin-left: 20px;
+        font-size: 20px;
+        color: var(--paper-grey-50);
+      }
+    </style>
+    <div id="header" class="layout horizontal center">
+      <div id="title">View Tester</div>
+      <paper-menu-button horizontal-align="right">
+        <paper-item class="dropdown-trigger">
+          <paper-item-body class="layout horizontal center">
+            <div class="user-name">{{currentPage.title}}</div>
+            <iron-icon icon="arrow-drop-down"></iron-icon>
+          </paper-item-body>
+        </paper-item>
+        <paper-menu class="dropdown-content">
+          <template is="dom-repeat" items="[[pages]]" as="page">
+            <paper-item on-tap="_selectPage" target-page$="[[page.id]]">
+              <paper-item-body>
+                <span>[[page.title]]</span>
+              </paper-item-body>
+            </paper-item>
+          </template>
+        </paper-menu>
+      </paper-menu-button>
+    </div>
+    <iron-pages attr-for-selected="id" selected="{{currentPage.id}}">
+      <content id="content"></content>
+    </iron-pages>
+  </template>
+
+  <script>
+    "use strict";
+    Polymer({
+      is: "elements-sandbox",
+      properties: {
+        currentPage: {
+          type: Object
+        },
+        pages: {
+          type: Array,
+          value: []
+        }
+      },
+      _selectPage(e) {
+        if (e.target.attributes['target-page']) {
+          let nextPageId = e.target.attributes['target-page'].value;
+          hasher.setHash(nextPageId);
+        }
+      },
+      _activatePage(pageId) {
+        this.currentPage = this.pages.filter((page) => {
+          return pageId == page.id;
+        })[0];
+
+        let distributedNodes = Polymer.dom(this.$.content).getDistributedNodes();
+        for (let node of distributedNodes) {
+          if (node.attributes && node.attributes['id'] && node.attributes['title']) {
+            if (node.attributes['id'].value === pageId) {
+              if (node.refresh) {
+                node.refresh();
+              }
+            }
+          }
+        };
+      },
+      _addRoute(pageId) {
+        crossroads.addRoute(pageId, () => {
+          this._activatePage(pageId);
+        });
+      },
+      attached() {
+        let distributedNodes = Polymer.dom(this.$.content).getDistributedNodes();
+        for (let node of distributedNodes) {
+          if (node.attributes && node.attributes['id'] && node.attributes['title']) {
+            let pageId = node.attributes['id'].value;
+            let pageTitle = node.attributes['title'].value;
+            this.push('pages', {
+              id: pageId,
+              title: pageTitle
+            });
+            this._addRoute(pageId);
+          }
+        };
+        var handleChanges = (newHash, oldHash) => {
+          this.currentHash = newHash;
+          crossroads.parse(newHash);
+        }
+
+        hasher.prependHash = '!';
+        hasher.changed.add(handleChanges);
+        hasher.initialized.add(handleChanges);
+
+
+        hasher.init();
+
+      //   console.log("### Current hash : ", hasher.getHash());
+        if(!hasher.getHash()){
+           hasher.setHash(this.pages[0].id);
+        }
+      }
+    });
+  </script>
+
+</dom-module>
