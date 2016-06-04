@@ -151,7 +151,9 @@
                 //      return false;
                 //  };
 
-                this.linkedGraph = new BoardGraph("#d3Board");
+               //  this.linkedGraph = new BoardGraph("#d3Board");
+
+                this.linkedGraph = new BoardGraph(this.$.d3Board);
                 this.linkedGraph.pencilFilter = false;
 
                 this.linkedGraph.onBoardClicked = (e, pos) => {

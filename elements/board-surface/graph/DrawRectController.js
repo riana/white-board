@@ -13,22 +13,20 @@ class DrawRectController {
 						scale: self.scale,
 						translate: self.translate
 					};
-
-					// TODO fix DRAW_RECT offset
-					let coords = getDiagramCoords(d3.event.sourceEvent.x, d3.event.sourceEvent.y, this.diagram.translate, this.diagram.scale);
+					let containerBounds = this.diagram.domElement.getBoundingClientRect();
+					let coords = getDiagramCoords(d3.event.sourceEvent.x - containerBounds.left, d3.event.sourceEvent.y - containerBounds.top, this.diagram.translate, this.diagram.scale);
 
 					this.drawingRect.x = coords.x;
 					this.drawingRect.y = coords.y;
 					this.drawingRect.width = 0;
 					this.drawingRect.height = 0;
-
 				}
 			})
 			.on('dragend', (d, i) => {
 				if (this.diagram.state === LinkedGraphStates.DRAW_RECT) {
 					this.diagram.applyZoom(this.viewportBackup);
 					this.diagram.exitDrawRectMode();
-               this.drawingLayer.attr("visibility", "hidden");
+					this.drawingLayer.attr("visibility", "hidden");
 				}
 			})
 			.on("drag", (d, i) => {
@@ -45,36 +43,36 @@ class DrawRectController {
 			});
 		this.diagram.svg.call(this.drawDrag);
 
-      this.drawingLayer = this.container.append("g");
+		this.drawingLayer = this.container.append("g");
 
-     this.drawingLayer.append("svg:rect")
-          .attr("id", "drawingRect")
-          .attr("fill", "none")
-          .attr("stroke", "#FF0000")
-          .attr("stroke-width", "10px");
+		this.drawingLayer.append("svg:rect")
+			.attr("id", "drawingRect")
+			.attr("fill", "none")
+			.attr("stroke", "#FF0000")
+			.attr("stroke-width", "10px");
 
-     this.drawingRect = {
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0
-     };
+		this.drawingRect = {
+			x: 0,
+			y: 0,
+			width: 0,
+			height: 0
+		};
 	}
 
-   update() {
-      this.drawingLayer.selectAll("#drawingRect")
-          .attr("x", (d) => {
-               return this.drawingRect.x;
-          })
-          .attr("y", (d) => {
-               return this.drawingRect.y;
-          })
-          .attr("height", (d) => {
-               return this.drawingRect.height;
-          })
-          .attr("width", (d) => {
-               return this.drawingRect.width;
-          });
-  }
+	update() {
+		this.drawingLayer.selectAll("#drawingRect")
+			.attr("x", (d) => {
+				return this.drawingRect.x;
+			})
+			.attr("y", (d) => {
+				return this.drawingRect.y;
+			})
+			.attr("height", (d) => {
+				return this.drawingRect.height;
+			})
+			.attr("width", (d) => {
+				return this.drawingRect.width;
+			});
+	}
 
 }
