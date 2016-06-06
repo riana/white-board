@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <link rel="import" href="../app-imports.html">
+<link rel="import" href="../utils/image-upload.html">
 
 <dom-module id="visual-library">
 
@@ -11,8 +12,8 @@
             }
 
             .header {
-               height: 48px;
-               color: var(--paper-blue-500);
+                height: 48px;
+                color: var(--paper-blue-500);
             }
 
             .title {
@@ -22,7 +23,7 @@
             }
 
             .main-container {
-               overflow: auto;
+                overflow: auto;
             }
 
             .images-container {
@@ -48,9 +49,9 @@
                 <div class="layout horizontal wrap center-justified">
                     <template is="dom-repeat" items="[[images]]" as="images">
                         <div class="image-card">
-
                         </div>
                     </template>
+                    <image-upload class="image-card" default-image="[[defaultUploadImage]]" sizing="cover" on-image-selected="_imageSelected"></image-upload>
                 </div>
             </div>
         </div>
@@ -63,14 +64,23 @@
             properties: {
                 images: {
                     type: Array
+                },
+                defaultUploadImage: {
+                    type: String,
+                    value: 'res/add-image.svg'
                 }
+
             },
             attached() {
                 let images = [];
-                for (var i = 0; i < 150; i++) {
+                for (var i = 0; i < 10; i++) {
                     images.push({});
                 }
                 this.images = images;
+            },
+            _imageSelected(e){
+               let file = e.detail;
+               console.log("_imageSelected : ", file);
             }
         });
     </script>
