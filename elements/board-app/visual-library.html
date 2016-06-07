@@ -44,11 +44,10 @@
 
 
         <div class="main-container flex">
-
             <div class="images-container">
                 <div class="layout horizontal wrap center-justified">
-                    <template is="dom-repeat" items="[[images]]" as="images">
-                        <div class="image-card">
+                    <template is="dom-repeat" items="[[images]]" as="image">
+                        <div id="[[image.id]]" class="image-card" draggable="true" on-dragstart="drag">
                         </div>
                     </template>
                     <image-upload class="image-card" default-image="[[defaultUploadImage]]" sizing="cover" on-image-selected="_imageSelected"></image-upload>
@@ -74,13 +73,19 @@
             attached() {
                 let images = [];
                 for (var i = 0; i < 10; i++) {
-                    images.push({});
+                    images.push({
+                       type: 'image',
+                       id: `${i}`
+                    });
                 }
                 this.images = images;
             },
             _imageSelected(e){
                let file = e.detail;
                console.log("_imageSelected : ", file);
+            },
+            drag(e){
+               e.dataTransfer.setData("text", JSON.stringify(e.model.image));
             }
         });
     </script>

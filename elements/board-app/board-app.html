@@ -59,13 +59,13 @@
             <div id="controlBar" class="layout vertical center">
 
                 <div class="controls-container">
-                   <fa-button class$="mode-button [[_isEnabledStyle(currentMode, 'IDLE')]]" icon="fa-mouse-pointer" on-tap="_toggleIdleMode"></fa-button>
+                    <fa-button class$="mode-button [[_isEnabledStyle(currentMode, 'IDLE')]]" icon="fa-mouse-pointer" on-tap="_toggleIdleMode"></fa-button>
                     <fa-button class$="mode-button [[_isEnabledStyle(currentMode, 'DRAW_RECT')]]" icon="fa-pencil-square-o " on-tap="_toggleDrawRectMode"></fa-button>
                 </div>
 
-                <fa-button icon="fa-font" draggable="true" on-track="_onDropText"></fa-button>
+                <fa-button icon="fa-font" draggable="true" on-dragstart="_dragText"></fa-button>
                 <template is="dom-repeat" items="[[stickStyles]]" as="stickStyle">
-                    <paper-material elevation="2" class="add-button" draggable="true" on-track="_onDropStick">
+                    <paper-material elevation="2" class="add-button" draggable="true" on-dragstart="_dragStick">
                         <paper-icon-button icon="editor:short-text" style$="{{_getAddStickStyle(stickStyle)}}" no-ink></paper-icon-button>
                     </paper-material>
                 </template>
@@ -104,30 +104,37 @@
                 stickStyles: {
                     type: Array,
                     value: [{
+                        type: "stick",
                         name: "white",
                         color: "#000000",
                         background: "#FFFFFF"
                     }, {
+                        type: "stick",
                         name: "yellow",
                         color: "#000000",
                         background: "#FFEB3B"
                     }, {
+                        type: "stick",
                         name: "blue",
                         color: "#FFFFFF",
                         background: "#039BE5"
                     }, {
+                        type: "stick",
                         name: "green",
                         color: "#FFFFFF",
                         background: "#689F38"
                     }, {
+                        type: "stick",
                         name: "purple",
                         color: "#FFFFFF",
                         background: "#7E57C2"
                     }, {
+                        type: "stick",
                         name: "red",
                         color: "#FFFFFF",
                         background: "#F44336"
                     }, {
+                        type: "stick",
                         name: "orange",
                         color: "#FFFFFF",
                         background: "#EF6C00"
@@ -210,7 +217,7 @@
             },
             _addNode(newNode, e) {
 
-                let pos = this.$.board.getPositionOnBoard(e.detail.x, e.detail.y);
+                let pos = this.$.board.getPositionOnBoard(e.offsetX, e.offsetY);
 
                 newNode.id = UUID.generate();
                 newNode.text = "Put your text here";
@@ -228,21 +235,14 @@
                     y: e.detail.y - (newNode.height / 2)
                 });
             },
-            _onDropStick(e) {
-                if (e.detail.state === 'end') {
-                    let newNode = {
-                        style: e.model.stickStyle
-                    };
-                    this._addNode(newNode, e);
-                }
+            _dragStick(e) {
+                e.dataTransfer.setData("text", JSON.stringify(e.model.stickStyle));
             },
-            _onDropText(e) {
-                if (e.detail.state === 'end') {
-                    let newNode = {
-                        type: "text"
-                    };
-                    this._addNode(newNode, e);
-                }
+
+            _dragText(e) {
+                e.dataTransfer.setData("text", JSON.stringify({
+                    type: "text"
+                }));
             },
             _getAddStickStyle(stickStyle) {
                 return `background: ${stickStyle.background}; color: ${stickStyle.color};`;
@@ -266,40 +266,65 @@
             // },
             _handleDrop(e) {
                 e.preventDefault();
-                var file = e.dataTransfer.files[0],
-                    reader = new FileReader();
+                var textData = e.dataTransfer.getData("text");
+                // File drop
+                if (textData.length === 0) {
 
-                //   file.type.lastIndexOf("video/")
-                //  console.log("file type : ", file.type, file.type.lastIndexOf("image/"));
+                    var file = e.dataTransfer.files[0],
+                        reader = new FileReader();
 
-                reader.onload = (event) => {
-                    console.log(e);
-                    let position = this.$.board.getPositionOnBoard(e.offsetX, e.offsetY);
-                    let imageData = event.target.result;
+                    //   file.type.lastIndexOf("video/")
+                    //  console.log("file type : ", file.type, file.type.lastIndexOf("image/"));
 
-                    var img = new Image;
-                    img.onload = () => {
-                        let imageTest = {
-                            id: UUID.generate(),
-                            type: file.type,
-                            x: position.x,
-                            y: position.y,
-                            width: img.width,
-                            height: img.height,
-                            rotation: 0
+                    reader.onload = (event) => {
+                        console.log(e);
+                        let position = this.$.board.getPositionOnBoard(e.offsetX, e.offsetY);
+                        let imageData = event.target.result;
+
+                        var img = new Image;
+                        img.onload = () => {
+                            let imageTest = {
+                                id: UUID.generate(),
+                                type: file.type,
+                                x: position.x,
+                                y: position.y,
+                                width: img.width,
+                                height: img.height,
+                                rotation: 0
+                            };
+
+                            this.$.storage.saveImage(this.boardContent.id, imageTest.id, file, (resp) => {
+                                console.log("## Media refresh");
+                                this.$.board.addMedia(imageTest.id, imageData);
+                                this.boardContent.images.push(imageTest);
+                                this.$.board._dataUpdated();
+                                this._save();
+                            }, imageData);
                         };
-
-                        this.$.storage.saveImage(this.boardContent.id, imageTest.id, file, (resp) => {
-                            console.log("## Media refresh");
-                            this.$.board.addMedia(imageTest.id, imageData);
-                            this.boardContent.images.push(imageTest);
-                            this.$.board._dataUpdated();
-                            this._save();
-                        }, imageData);
+                        img.src = imageData;
                     };
-                    img.src = imageData;
-                };
-                reader.readAsDataURL(file);
+                    reader.readAsDataURL(file);
+                } else {
+                    let droppedObject = JSON.parse(textData);
+                    switch (droppedObject.type) {
+                        case 'stick':
+                            let newNode = {
+                                type: "text"
+                            };
+                            this._addNode(newNode, e);
+                            break;
+                        case 'text':
+                            let textNode = {
+                                type: "text"
+                            };
+                            this._addNode(textNode, e);
+                            break;
+                        case 'image':
+                            console.log("drop Image : ", droppedObject);
+                            break;
+                    }
+                    //   console.log("drop text : ", textData);
+                }
                 return false;
             },
             _dragOver(e) {
@@ -310,18 +335,18 @@
             },
             _inspectorChanged(e) {
                 if (e.detail.length !== 0) {
-                   this.$.inspector.hidden = false;
+                    this.$.inspector.hidden = false;
                     this.currentInspector = e.detail;
                 } else {
-                   this.$.inspector.hidden = true;
+                    this.$.inspector.hidden = true;
                 }
             },
             _restoreViewport(e) {
                 this.$.board.animateViewport(e.detail);
             },
-            _toggleIdleMode(){
-               this.currentMode = 'IDLE';
-               this.$.board.linkedGraph.cancelDrawRectMode();
+            _toggleIdleMode() {
+                this.currentMode = 'IDLE';
+                this.$.board.linkedGraph.cancelDrawRectMode();
             },
             _toggleDrawRectMode() {
                 if (this.currentMode === 'DRAW_RECT') {
