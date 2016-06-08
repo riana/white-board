@@ -283,7 +283,7 @@
 
                         var img = new Image;
                         img.onload = () => {
-                            let imageTest = {
+                            let imageNode = {
                                 id: UUID.generate(),
                                 type: file.type,
                                 x: position.x,
@@ -296,7 +296,7 @@
                             this.$.storage.saveImage(this.boardContent.id, imageTest.id, file, (resp) => {
                                 console.log("## Media refresh");
                                 this.$.board.addMedia(imageTest.id, imageData);
-                                this.boardContent.images.push(imageTest);
+                                this.boardContent.images.push(imageNode);
                                 this.$.board._dataUpdated();
                                 this._save();
                             }, imageData);
